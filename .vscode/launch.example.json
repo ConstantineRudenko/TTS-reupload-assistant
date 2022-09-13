@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Launch Program",
+            "outFiles": ["${workspaceFolder}/build/**/*.js"],
+            "preLaunchTask": "npm: build",
+            "program": "${workspaceFolder}/main.ts",
+            "request": "launch",
+            "args": [
+                "C:/Users/UserName/Documents/My Games/Tabletop Simulator/Saves/TS_Save_96.json",
+                "C:/Users/UserName/Documents/My Games/Tabletop Simulator/tmp"
+            ],
+            "runtimeExecutable": "node",
+            "skipFiles": ["<node_internals>/**"],
+            "smartStep": true,
+            "sourceMaps": true,
+            "type": "node"
+        }
+    ]
+}

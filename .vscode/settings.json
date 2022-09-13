@@ -1,0 +1,18 @@
+{
+    "sonarlint.rules": {
+        "typescript:S1125": {
+            "level": "off"
+        }
+    },
+    "prettier.tabWidth": 4,
+    "prettier.singleQuote": false,
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+}
