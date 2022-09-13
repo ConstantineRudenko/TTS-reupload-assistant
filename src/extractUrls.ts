@@ -1,5 +1,3 @@
-import fs from "fs";
-
 export default function extractUrls(saveFileContent: string): string[] {
     const regexUrl = /URL": "([a-zA-Z0-9\:/\-\.\?=]+)"/g;
 
