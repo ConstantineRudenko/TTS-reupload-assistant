@@ -28,44 +28,63 @@ export default function downloadFile(
             return;
     }
 
-    protocol.get(url, function (response) {
-        switch (response.statusCode) {
-            case 200:
-                let file = fs.createWriteStream(filePath, { autoClose: true });
-                response.pipe(file);
+    protocol
+        .get(url, function (response) {
+            switch (response.statusCode) {
+                case 200:
+                    let file = fs.createWriteStream(filePath, {
+                        autoClose: true,
+                    });
+                    response.pipe(file);
 
-                file.on("finish", () => {
-                    console.log(`downloaded:`);
-                    console.log(`    ${filePath}`);
+                    file.on("finish", () => {
+                        console.log(`downloaded:`);
+                        console.log(`    ${filePath}`);
+                        resolve(null);
+                    });
+
+                    file.on("error", () => {
+                        fs.unlinkSync(filePath);
+                        console.log(`failed: ${url}`);
+                        console.log(file.errored.message);
+                        resolve(null);
+                    });
+                    return;
+                case 301:
+                case 302:
+                    console.log(`[warning] file moved:`);
+                    console.log(`    old: ${url}`);
+                    console.log(`    new: ${response.headers["location"]}`);
+
+                    let newUrl: URL;
+                    try {
+                        newUrl = new URL(response.headers["location"]);
+                    } catch {
+                        try {
+                            const oldUrl = new URL(url);
+                            newUrl = new URL(
+                                `${oldUrl.protocol}//${oldUrl.hostname}${response.headers["location"]}`
+                            );
+                            console.log(`    full: ${newUrl.href}`);
+                        } catch (err) {
+                            console.log(`failed: ${url}`);
+                            console.log(err.message);
+                            resolve(null);
+                            return;
+                        }
+                    }
+                    downloadFile(filePath, newUrl.href, resolve, reject);
+                    return;
+                default:
+                    console.log(`failed: ${url}`);
+                    console.log(`Response status: ${response.statusCode}`);
                     resolve(null);
-                });
-
-                file.on("error", () => {
-                    fs.unlinkSync(filePath);
-                    reject(`Error: ${file.errored.message}`);
-                });
-                return;
-            case 301:
-            case 302:
-                console.log(`[warning] file moved:`);
-                console.log(`    old: ${url}`);
-                console.log(`    new: ${response.headers["location"]}`);
-
-                let newUrl: URL;
-                try {
-                    newUrl = new URL(response.headers["location"]);
-                } catch {
-                    const oldUrl = new URL(url);
-                    newUrl = new URL(
-                        `${oldUrl.protocol}//${oldUrl.hostname}${response.headers["location"]}`
-                    );
-                    console.log(`    full: ${newUrl.href}`);
-                }
-                downloadFile(filePath, newUrl.href, resolve, reject);
-                return;
-            default:
-                reject("Response status: " + response.statusCode);
-                return;
-        }
-    });
+                    return;
+            }
+        })
+        .on("error", (err) => {
+            console.log(`failed: ${url}`);
+            console.log(err.message);
+            resolve(null);
+        });
 }
