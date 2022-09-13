@@ -45,7 +45,8 @@ export default function downloadFile(
 
                     file.on("error", () => {
                         fs.unlinkSync(filePath);
-                        console.log(`failed: ${url}`);
+                        console.log(`failed:`);
+                        console.log(`    ${url}`);
                         console.log(file.errored.message);
                         resolve(null);
                     });
@@ -67,8 +68,8 @@ export default function downloadFile(
                             );
                             console.log(`    full: ${newUrl.href}`);
                         } catch (err) {
-                            console.log(`failed: ${url}`);
-                            console.log(err.message);
+                            console.log(`failed:`);
+                            console.log(`    ${url}`);
                             resolve(null);
                             return;
                         }
@@ -76,14 +77,16 @@ export default function downloadFile(
                     downloadFile(filePath, newUrl.href, resolve, reject);
                     return;
                 default:
-                    console.log(`failed: ${url}`);
+                    console.log(`failed:`);
+                    console.log(`    ${url}`);
                     console.log(`Response status: ${response.statusCode}`);
                     resolve(null);
                     return;
             }
         })
         .on("error", (err) => {
-            console.log(`failed: ${url}`);
+            console.log(`failed:`);
+            console.log(`    ${url}`);
             console.log(err.message);
             resolve(null);
         });
