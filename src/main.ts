@@ -22,8 +22,6 @@ declare global {
 
     const cachedFiles = enumerateCachedFiles(args.cacheFolder);
 
-    let queue = urls.slice();
-
     const promises = urls.map(function (url) {
         return new Promise(async function (resolve, reject) {
             const fname = urlToFname(url);
@@ -41,7 +39,6 @@ declare global {
             );
 
             if (exists) {
-                queue = queue.filter((x) => x != url);
                 resolve(null);
                 return;
             }
@@ -68,22 +65,18 @@ declare global {
                 }
 
                 resolve(null);
-                queue = queue.filter((x) => x != url);
-                console.log(`picked cached instance:`);
-                console.log(`    ${url}`);
+                //console.log(`picked cached instance:`);
+                //console.log(`    ${url}`);
                 return;
             }
 
-            downloadFile(filePath, url, resolve, reject, queue);
+            downloadFile(filePath, url, resolve, reject);
         });
     });
 
     await Promise.all(promises);
 
     urls.forEach(function (url) {
-        console.log("replacing: ");
-        console.log(`    ${url}`);
-
         const fname = urlToFname(url);
         const filePath = path.join(args.tmpPath, fname);
         if (fs.existsSync(filePath) == false) {
@@ -100,4 +93,6 @@ declare global {
     });
 
     fs.writeFileSync(`${args.saveFilePath}.edited`, saveFileContent);
+
+    console.log("finished");
 })();
