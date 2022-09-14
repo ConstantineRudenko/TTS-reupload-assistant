@@ -6,35 +6,34 @@ export default function parseArgs(): {
     tmpPath: string;
     cacheFolder: string;
     noLinks: boolean;
+    timeout: number;
 } {
     let opts = docopt(
         `TTS reupload helper
 Usage:
-	reup.js <tts-save-file> <tts-cache-folder>  <temp-folder> [--no-links]
+    reup.js <tts-save-file> <tts-cache-folder> <temp-folder> [options]
 
-<tts-save-file>
-	TTS save file to be processed
+Arguments:
+    <tts-save-file>
+        TTS save file to be processed.
+        Example:	"Documents/My Games/Tabletop Simulator/
+                      Saves/TS_Save_96.json"
+    <tts-cache-folder>
+        TTS local mod cache.
+        Example:	"Documents/My Games/Tabletop Simulator/Mods/"		
+    <temp-folder>
+        Any folder to hold the downloaded files.
 
-	example:	Documents/My Games/Tabletop Simulator/
-				Saves/TS_Save_96.json
-
-<tts-cache-folder>
-	TTS local mod cache
-
-	example:	Documents/My Games/Tabletop Simulator/
-				Mods/
-				
-<temp-folder>
-
-	Any folder to hold the downloaded files.
-
---no-links
-	By default soft links are created for existing cached files.
-	Use this option to force copying instead.
-
-Output
-
-	Will be placed next to the original file with ".edited" in the end.`
+Options:
+    --no-links
+        By default soft links are created for existing cached files.
+        Use this option to force copying instead.
+    --timeout=T  [default: 3000]
+        How long to wait in milliseconds for the server response
+        before giving up on a URL.
+Output:
+    Will be placed next to the original file with ".edited"
+    added to the name.`
     );
 
     return {
@@ -42,5 +41,17 @@ Output
         tmpPath: opts["<temp-folder>"],
         cacheFolder: opts["<tts-cache-folder>"],
         noLinks: opts["--no-links"],
+        timeout: parseTimeout(opts["--timeout"]),
     };
+}
+
+function parseTimeout(sTimeout: string): number {
+    let timeout = Number(sTimeout);
+    switch (true) {
+        case isNaN(timeout):
+        case timeout < 0:
+            console.log("Invalid timeout provided");
+            process.exit();
+    }
+    return timeout;
 }

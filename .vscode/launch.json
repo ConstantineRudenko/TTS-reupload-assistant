@@ -9,7 +9,8 @@
             "args": [
                 "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Saves/TS_Save_84.json",
                 "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Mods/",
-                "D:/tmp"
+                "D:/tmp",
+                "--timeout=500"
             ],
             "runtimeExecutable": "node",
             "skipFiles": ["<node_internals>/**"],

@@ -6,6 +6,7 @@ import https from "https";
 export default function downloadFile(
     filePath: string,
     url: string,
+    timeout: number,
     resolve: (value: any) => void,
     reject: (error: string | Error) => void
 ) {
@@ -24,7 +25,7 @@ export default function downloadFile(
     }
 
     protocol
-        .get(url, { timeout: 3000 }, function (response) {
+        .get(url, { timeout: timeout }, function (response) {
             switch (response.statusCode) {
                 case 200:
                     let file = fs.createWriteStream(filePath, {
@@ -70,7 +71,13 @@ export default function downloadFile(
                             return;
                         }
                     }
-                    downloadFile(filePath, newUrl.href, resolve, reject);
+                    downloadFile(
+                        filePath,
+                        newUrl.href,
+                        timeout,
+                        resolve,
+                        reject
+                    );
                     return;
                 default:
                     console.log(`failed:`);

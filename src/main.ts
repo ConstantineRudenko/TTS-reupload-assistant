@@ -70,7 +70,7 @@ declare global {
                 return;
             }
 
-            downloadFile(filePath, url, resolve, reject);
+            downloadFile(filePath, url, args.timeout, resolve, reject);
         });
     });
 
