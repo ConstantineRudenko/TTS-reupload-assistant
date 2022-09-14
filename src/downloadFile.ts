@@ -1,12 +1,14 @@
+import { Args } from "./parseArgs";
 import { URL } from "url";
 import fs from "fs";
+import fsPromises from "fs/promises";
 import http from "http";
 import https from "https";
 
 export default function downloadFile(
     filePath: string,
     url: string,
-    timeout: number,
+    args: Args,
     resolve: (value: any) => void,
     reject: (error: string | Error) => void
 ) {
@@ -19,13 +21,26 @@ export default function downloadFile(
         case url.slice(0, 8) == "https://":
             protocol = https;
             break;
+        case url.slice(0, 8) == "file:///":
+            url = url.slice(8);
+            (async function () {
+                if (args.noLinks) {
+                    await fsPromises.copyFile(url, filePath);
+                } else {
+                    await fsPromises.symlink(url, filePath);
+                }
+                console.log(`picked local file:`);
+                console.log(`    ${url}`);
+                resolve(null);
+            })();
+            return;
         default:
             resolve(null);
             return;
     }
 
     protocol
-        .get(url, { timeout: timeout }, function (response) {
+        .get(url, { timeout: args.timeout }, function (response) {
             switch (response.statusCode) {
                 case 200:
                     let file = fs.createWriteStream(filePath, {
@@ -71,13 +86,7 @@ export default function downloadFile(
                             return;
                         }
                     }
-                    downloadFile(
-                        filePath,
-                        newUrl.href,
-                        timeout,
-                        resolve,
-                        reject
-                    );
+                    downloadFile(filePath, newUrl.href, args, resolve, reject);
                     return;
                 default:
                     console.log(`failed:`);

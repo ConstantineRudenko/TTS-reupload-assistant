@@ -1,13 +1,15 @@
 import { docopt } from "docopt";
 import process from "process";
 
-export default function parseArgs(): {
+export interface Args {
     saveFilePath: string;
     tmpPath: string;
     cacheFolder: string;
     noLinks: boolean;
     timeout: number;
-} {
+}
+
+export default function parseArgs(): Args {
     let opts = docopt(
         `TTS reupload helper
 Usage:
