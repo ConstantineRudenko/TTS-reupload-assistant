@@ -1,6 +1,6 @@
 # TTS-reupload-assistant
 
-Reroutes all URLs in a save file (images, meshes, asset bundles, etc.) to local copies for a complete re-upload.
+Reroutes all URLs in a save file (images, meshes, asset bundles, etc.) to local copies for a complete re-upload. Downloads URLs that have not been cached.
 
 ```
 Usage:
