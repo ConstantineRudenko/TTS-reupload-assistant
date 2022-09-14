@@ -19,7 +19,10 @@ declare global {
 
     let saveFileContent = fs.readFileSync(args.saveFilePath, "utf-8");
     const urls = extractUrls(saveFileContent);
+
     const cachedFiles = enumerateCachedFiles(args.cacheFolder);
+
+    let queue = urls.slice();
 
     const promises = urls.map(function (url) {
         return new Promise(async function (resolve, reject) {
@@ -38,6 +41,7 @@ declare global {
             );
 
             if (exists) {
+                queue = queue.filter((x) => x != url);
                 resolve(null);
                 return;
             }
@@ -51,17 +55,26 @@ declare global {
             }
 
             if (cachedInstances.length == 1) {
-                await fsPromises.copyFile(
-                    cachedInstances[0].fullPath,
-                    filePath
-                );
+                if (args.noLinks) {
+                    await fsPromises.copyFile(
+                        cachedInstances[0].fullPath,
+                        filePath
+                    );
+                } else {
+                    await fsPromises.symlink(
+                        cachedInstances[0].fullPath,
+                        filePath
+                    );
+                }
+
                 resolve(null);
+                queue = queue.filter((x) => x != url);
                 console.log(`picked cached instance:`);
                 console.log(`    ${url}`);
                 return;
             }
 
-            downloadFile(filePath, url, resolve, reject);
+            downloadFile(filePath, url, resolve, reject, queue);
         });
     });
 

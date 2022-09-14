@@ -3,13 +3,13 @@
         {
             "name": "Launch Program",
             "outFiles": ["${workspaceFolder}/build/**/*.js"],
-            "preLaunchTask": "npm: build",
+            "preLaunchTask": "npm: build" /* built-in */,
             "program": "${workspaceFolder}/src/main.ts",
             "request": "launch",
             "args": [
-                "C:/Users/UserName/Documents/My Games/Tabletop Simulator/Saves/TS_Save_96.json",
-                "C:/Users/UserName/Documents/My Games/Tabletop Simulator/Mods",
-                "C:/Users/UserName/Documents/My Games/Tabletop Simulator/tmp"
+                "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Saves/TS_Save_84.json",
+                "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Mods/",
+                "D:/tmp"
             ],
             "runtimeExecutable": "node",
             "skipFiles": ["<node_internals>/**"],

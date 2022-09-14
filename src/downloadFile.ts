@@ -7,7 +7,8 @@ export default function downloadFile(
     filePath: string,
     url: string,
     resolve: (value: any) => void,
-    reject: (error: string | Error) => void
+    reject: (error: string | Error) => void,
+    queue: string[]
 ) {
     let protocol: typeof http | typeof https = null;
 
@@ -35,6 +36,12 @@ export default function downloadFile(
                     file.on("finish", () => {
                         console.log(`downloaded:`);
                         console.log(`    ${filePath}`);
+                        queue.splice(
+                            queue.findIndex((x) => x == url),
+                            1
+                        );
+                        console.log(queue);
+                        console.log(`num in queue: ${queue.length}`);
                         resolve(null);
                     });
 
@@ -43,12 +50,16 @@ export default function downloadFile(
                         console.log(`failed:`);
                         console.log(`    ${url}`);
                         console.log(file.errored.message);
+                        queue.splice(
+                            queue.findIndex((x) => x == url),
+                            1
+                        );
                         resolve(null);
                     });
                     return;
                 case 301:
                 case 302:
-                    console.log(`[warning] file moved:`);
+                    console.log(`file moved:`);
                     console.log(`    old: ${url}`);
                     console.log(`    new: ${response.headers["location"]}`);
 
@@ -65,16 +76,25 @@ export default function downloadFile(
                         } catch (err) {
                             console.log(`failed:`);
                             console.log(`    ${url}`);
+                            console.log(`    error: ${err.message}`);
+                            queue.splice(
+                                queue.findIndex((x) => x == url),
+                                1
+                            );
                             resolve(null);
                             return;
                         }
                     }
-                    downloadFile(filePath, newUrl.href, resolve, reject);
+                    downloadFile(filePath, newUrl.href, resolve, reject, queue);
                     return;
                 default:
                     console.log(`failed:`);
                     console.log(`    ${url}`);
                     console.log(`    Response status: ${response.statusCode}`);
+                    queue.splice(
+                        queue.findIndex((x) => x == url),
+                        1
+                    );
                     resolve(null);
                     return;
             }
@@ -83,6 +103,10 @@ export default function downloadFile(
             console.log(`failed:`);
             console.log(`    ${url}`);
             console.log(err.message);
+            queue.splice(
+                queue.findIndex((x) => x == url),
+                1
+            );
             resolve(null);
         });
 }

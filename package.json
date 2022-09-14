@@ -5,7 +5,7 @@
     "main": "./build/main.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "./build/main.js",
+        "start": "node ./build/main.js",
         "build": "tsc",
         "clean": "rimraf ./build/*",
         "help": "ts-node main.ts --help"
