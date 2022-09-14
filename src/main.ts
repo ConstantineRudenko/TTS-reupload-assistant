@@ -1,4 +1,5 @@
 import extractUrls from "./extractUrls";
+import fsPromises from "fs/promises";
 import fs from "fs";
 import parseArgs from "./parseArgs";
 import path from "path";
@@ -21,9 +22,25 @@ declare global {
     const cachedFiles = enumerateCachedFiles(args.cacheFolder);
 
     const promises = urls.map(function (url) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(async function (resolve, reject) {
             const fname = urlToFname(url);
             const filePath = path.join(args.tmpPath, fname);
+
+            const exists = await new Promise((resolve) =>
+                fsPromises
+                    .access(filePath, fs.constants.F_OK)
+                    .then(() => {
+                        resolve(true);
+                    })
+                    .catch(() => {
+                        resolve(false);
+                    })
+            );
+
+            if (exists) {
+                resolve(null);
+                return;
+            }
 
             const cachedInstances = cachedFiles.filter(
                 (cachedFile) => cachedFile.fname == fname
@@ -34,7 +51,10 @@ declare global {
             }
 
             if (cachedInstances.length == 1) {
-                fs.copyFileSync(cachedInstances[0].fullPath, filePath);
+                await fsPromises.copyFile(
+                    cachedInstances[0].fullPath,
+                    filePath
+                );
                 resolve(null);
                 console.log(`picked cached instance:`);
                 console.log(`    ${url}`);
@@ -48,6 +68,9 @@ declare global {
     await Promise.all(promises);
 
     urls.forEach(function (url) {
+        console.log("replacing: ");
+        console.log(`    ${url}`);
+
         const fname = urlToFname(url);
         const filePath = path.join(args.tmpPath, fname);
         if (fs.existsSync(filePath) == false) {
@@ -64,6 +87,4 @@ declare global {
     });
 
     fs.writeFileSync(`${args.saveFilePath}.edited`, saveFileContent);
-
-    console.log("finished!");
 })();

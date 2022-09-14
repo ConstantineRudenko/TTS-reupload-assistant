@@ -9,11 +9,6 @@ export default function downloadFile(
     resolve: (value: any) => void,
     reject: (error: string | Error) => void
 ) {
-    if (fs.existsSync(filePath)) {
-        resolve(null);
-        return;
-    }
-
     let protocol: typeof http | typeof https = null;
 
     switch (true) {
@@ -79,7 +74,7 @@ export default function downloadFile(
                 default:
                     console.log(`failed:`);
                     console.log(`    ${url}`);
-                    console.log(`Response status: ${response.statusCode}`);
+                    console.log(`    Response status: ${response.statusCode}`);
                     resolve(null);
                     return;
             }
