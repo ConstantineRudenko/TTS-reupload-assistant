@@ -24,6 +24,7 @@ Options:
     --timeout=T  [default: 3000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
+        
 Output:
     Will be placed next to the original file with ".edited"
     added to the name.
