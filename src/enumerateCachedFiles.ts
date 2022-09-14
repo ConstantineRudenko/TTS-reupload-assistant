@@ -2,11 +2,11 @@ import fs from "fs";
 import path from "path";
 
 export default function enumerateCachedFiles(dir: string) {
-    const cachedFiles: { fname: string; fullPath: string }[] = [];
+    const cachedFiles: { cachedFname: string; fullPath: string }[] = [];
 
     fs.readdirSync(dir)
         .filter((child) => {
-            if (fs.lstatSync(path.join(dir, child)).isDirectory() == false) {
+            if (!fs.lstatSync(path.join(dir, child)).isDirectory()) {
                 return false;
             }
             if (child.slice(-3) == "Raw") {
@@ -25,7 +25,7 @@ export default function enumerateCachedFiles(dir: string) {
                     fnameNoExt = "".concat(...splitFname.slice(0, -1));
                 }
                 cachedFiles.push({
-                    fname: fnameNoExt,
+                    cachedFname: fnameNoExt,
                     fullPath: path.join(dir, subdir, fname),
                 });
             })

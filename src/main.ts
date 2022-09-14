@@ -3,7 +3,7 @@ import fsPromises from "fs/promises";
 import fs from "fs";
 import parseArgs from "./parseArgs";
 import path from "path";
-import urlToFname from "./urlToFname";
+import urlToCachedFname from "./urlToCachedFname";
 
 import downloadFile from "./downloadFile";
 import enumerateCachedFiles from "./enumerateCachedFiles";
@@ -22,10 +22,9 @@ declare global {
 
     const cachedFiles = enumerateCachedFiles(args.cacheFolder);
 
-    const promises = urls.map(function (url) {
+    const promises = urls.map(function (url, urlIndex) {
         return new Promise(async function (resolve, reject) {
-            const fname = urlToFname(url);
-            const filePath = path.join(args.tmpPath, fname);
+            const filePath = path.join(args.tmpPath, String(urlIndex));
 
             const exists = await new Promise((resolve) =>
                 fsPromises
@@ -44,7 +43,7 @@ declare global {
             }
 
             const cachedInstances = cachedFiles.filter(
-                (cachedFile) => cachedFile.fname == fname
+                (cachedFile) => cachedFile.cachedFname == urlToCachedFname(url)
             );
 
             if (cachedInstances.length > 1) {
@@ -76,19 +75,15 @@ declare global {
 
     await Promise.all(promises);
 
-    urls.forEach(function (url) {
-        const fname = urlToFname(url);
-        const filePath = path.join(args.tmpPath, fname);
+    urls.forEach(function (url, urlIndex) {
+        const filePath = path.join(args.tmpPath, String(urlIndex));
         if (!fs.existsSync(filePath)) {
             return;
         }
 
         saveFileContent = saveFileContent.replaceAll(
             url,
-            `file:///${path.join(args.tmpPath, urlToFname(url))}`.replaceAll(
-                "\\",
-                "/"
-            )
+            `file:///${filePath}`.replaceAll("\\", "/")
         );
     });
 
