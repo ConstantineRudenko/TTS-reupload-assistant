@@ -79,7 +79,7 @@ declare global {
     urls.forEach(function (url) {
         const fname = urlToFname(url);
         const filePath = path.join(args.tmpPath, fname);
-        if (fs.existsSync(filePath) == false) {
+        if (!fs.existsSync(filePath)) {
             return;
         }
 

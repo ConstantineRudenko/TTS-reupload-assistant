@@ -1,9 +1,4 @@
 {
-    "sonarlint.rules": {
-        "typescript:S1125": {
-            "level": "off"
-        }
-    },
     "prettier.tabWidth": 4,
     "prettier.singleQuote": false,
     "[javascript]": {
