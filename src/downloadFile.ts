@@ -34,8 +34,8 @@ export default function downloadFile(
                     response.pipe(file);
 
                     file.on("finish", () => {
-                        //console.log(`downloaded:`);
-                        //console.log(`    ${filePath}`);
+                        console.log(`downloaded:`);
+                        console.log(`    ${filePath}`);
                         resolve(null);
                     });
 

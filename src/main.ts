@@ -65,8 +65,8 @@ declare global {
                 }
 
                 resolve(null);
-                //console.log(`picked cached instance:`);
-                //console.log(`    ${url}`);
+                console.log(`picked cached file:`);
+                console.log(`    ${url}`);
                 return;
             }
 
