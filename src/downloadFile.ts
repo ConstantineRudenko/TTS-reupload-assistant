@@ -25,7 +25,7 @@ export default function downloadFile(
     }
 
     protocol
-        .get(url, function (response) {
+        .get(url, { timeout: 3000 }, function (response) {
             switch (response.statusCode) {
                 case 200:
                     let file = fs.createWriteStream(filePath, {
