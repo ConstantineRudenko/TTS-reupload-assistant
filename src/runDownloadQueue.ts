@@ -1,9 +1,9 @@
-import './lib/extendBuildin';
+import './lib/extendBuiltin';
+import * as Log from './logger';
 import { Args } from './parseArgs';
-import { printUrl } from './printUrl';
 
 export interface UrlDownloadTask {
-    func: () => Promise<any>;
+    func: () => Promise<unknown>;
     url: string;
     urlIndex: number;
     started: number;
@@ -15,8 +15,8 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 
     const taskArrActive: UrlDownloadTask[] = [];
 
-    console.log(`    queue size: ${taskArr.length}`);
-    console.log(`    simultaneous downloads: ${args.simultaneous}`);
+    Log.normal(`queue size: ${taskArr.length}`);
+    Log.normal(`simultaneous downloads: ${args.simultaneous}`);
 
     await Promise.all(
         Array(args.simultaneous)
@@ -30,13 +30,19 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 
                         printQueue(taskArrActive);
 
-                        console.log('queued url download:');
-                        printUrl(promiseInfo.urlIndex, promiseInfo.url);
+                        Log.withUrl(
+                            promiseInfo.url,
+                            promiseInfo.urlIndex,
+                            'queued url download'
+                        );
 
                         await promiseInfo.func();
 
-                        console.log('processed url:');
-                        printUrl(promiseInfo.urlIndex, promiseInfo.url);
+                        Log.withUrl(
+                            promiseInfo.url,
+                            promiseInfo.urlIndex,
+                            'processed URL'
+                        );
 
                         taskArrActive.remove(promiseInfo);
                     }
@@ -51,14 +57,17 @@ function printQueue(promiseInfoArrActive: UrlDownloadTask[]) {
     const numTasks = promiseInfoArrActive.length;
 
     if (numTasks > 0) {
-        console.log(`active tasks (${numTasks}):`);
+        Log.spaced(`active tasks (${numTasks}):`);
 
         promiseInfoArrActive.forEach((promiseInfo) => {
             const sPassed = ((now - promiseInfo.started) / 1000).toFixed();
-            console.log(`    (${sPassed} seconds ago)`);
-            printUrl(promiseInfo.urlIndex, promiseInfo.url);
+            Log.withUrl(
+                promiseInfo.url,
+                promiseInfo.urlIndex,
+                `(${sPassed} seconds ago)`
+            );
         });
     } else {
-        console.log('no tasks left');
+        Log.normal('no tasks left');
     }
 }

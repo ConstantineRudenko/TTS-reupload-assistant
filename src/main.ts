@@ -1,12 +1,12 @@
-import './lib/extendBuildin';
+import './lib/extendBuiltin';
 import * as Cache from './enumerateCachedFiles';
+import * as Log from './logger';
 import downloadFile from './downloadFile';
 import extractUrls from './extractUrls';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import parseArgs from './parseArgs';
 import path from 'path';
-import { printUrl } from './printUrl';
 import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue';
 
 process.on('uncaughtException', function (err) {
@@ -25,8 +25,7 @@ void (async function () {
         url,
         urlIndex
     ): UrlDownloadTask {
-        console.log('queued for processing:');
-        printUrl(urlIndex, url);
+        Log.withUrl(url, urlIndex, 'queued for processing');
 
         return {
             url: url,
@@ -48,9 +47,7 @@ void (async function () {
                 );
 
                 if (exists) {
-                    console.log('file exists:');
-                    printUrl(urlIndex, url);
-                    return;
+                    Log.withUrl(url, urlIndex, 'file exists');
                 }
 
                 const cachedInstance = Cache.getCachedInstance(
@@ -71,8 +68,7 @@ void (async function () {
                         );
                     }
 
-                    console.log('picked cached file:');
-                    printUrl(urlIndex, url);
+                    Log.withUrl(url, urlIndex, 'picked cache file');
                     return;
                 }
 
@@ -81,12 +77,12 @@ void (async function () {
         };
     });
 
-    console.log('initating the download queue...');
+    Log.spaced('initating the download queue...');
 
     await runDownloadTasks(downloadTasks, args);
 
-    console.log('end of the download queue');
-    console.log('editing save file...');
+    Log.normal('end of the download queue');
+    Log.normal('editing save file...');
 
     urls.forEach(function (url, urlIndex) {
         const filePath = path.join(args.tmpPath, String(urlIndex));
@@ -100,10 +96,10 @@ void (async function () {
         );
     });
 
-    console.log('finished editing save file');
-    console.log('writing new save file...');
+    Log.normal('finished editing save file');
+    Log.normal('writing new save file...');
 
     fs.writeFileSync(`${args.saveFilePath}.edited`, saveFileContent);
 
-    console.log('finished writing new save file');
+    Log.normal('finished writing new save file');
 })();

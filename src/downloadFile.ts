@@ -1,9 +1,9 @@
+import * as Log from './logger';
 import { Args } from './parseArgs';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import http from 'http';
 import https from 'https';
-import { printUrl } from './printUrl';
 import { URL } from 'url';
 
 export default async function downloadFile(
@@ -14,8 +14,7 @@ export default async function downloadFile(
 ) {
     let protocol: typeof http | typeof https = null;
 
-    console.log('started downloading:');
-    printUrl(urlIndex, url);
+    Log.withUrl(url, urlIndex, 'started downloading');
 
     switch (true) {
         case url.slice(0, 7) == 'http://':
@@ -31,8 +30,7 @@ export default async function downloadFile(
                 await fsPromises.symlink(url.slice(8), filePath);
             }
 
-            console.log('picked local file:');
-            printUrl(urlIndex, url);
+            Log.withUrl(url, urlIndex, 'picked local file');
 
             return;
         default:
@@ -62,8 +60,7 @@ export default async function downloadFile(
                 }
             )
             .on('error', (err) => {
-                console.log('download error:');
-                console.log(`    ${err.message}`);
+                Log.withUrl(url, urlIndex, `download error: ${err.message}`);
                 resolve(null);
             });
     });
@@ -85,16 +82,21 @@ async function urlResponse(
 
             await new Promise((resolve) => {
                 file.on('finish', () => {
-                    console.log('downloaded successfully');
+                    Log.withUrl(url, urlIndex, 'downloaded successfully');
                     resolve(null);
                 });
 
-                file.on('error', () => {
-                    console.log('file error');
+                file.on('error', (err) => {
+                    Log.withUrl(url, urlIndex, `file error: ${err.message}`);
                     resolve(null);
-                    fs.unlink(filePath, (err) => {
-                        throw err;
-                    });
+                    try {
+                        fs.unlink(filePath, () => {
+                            // do nothing
+                        });
+                    } catch {
+                        // do nothing
+                    }
+                    throw err;
                 });
             });
 
@@ -102,24 +104,21 @@ async function urlResponse(
         }
         case 301:
         case 302: {
-            console.log('file moved:');
-            console.log(`    [${urlIndex}]`);
-            console.log(`    old: ${url}`);
-            console.log(`    new: ${response.headers['location']}`);
+            Log.withUrl(url, urlIndex, 'file moved');
+            Log.spaced(`old:\n${url}`);
 
             let newUrl: URL;
             try {
                 newUrl = new URL(response.headers['location']);
-            } catch (err) {
+                Log.spaced(`new:\n${response.headers['location']}`);
+            } catch {
                 try {
                     const oldUrl = new URL(url);
-                    newUrl = new URL(
-                        `${oldUrl.protocol}//${oldUrl.hostname}${response.headers['location']}`
-                    );
-                    console.log(`    full: ${newUrl.href}`);
+                    Log.spaced(`new (local):\n${response.headers['location']}`);
+                    newUrl = new URL(url, oldUrl.host);
+                    Log.spaced(`new:\n${newUrl.href}`);
                 } catch (err) {
-                    console.log('failed:');
-                    console.log(`    error: ${(err as Error).message}`);
+                    Log.spaced(`error: ${(err as Error).message}`);
                     return;
                 }
             }
@@ -127,8 +126,8 @@ async function urlResponse(
             return;
         }
         default:
-            console.log('failed:');
-            console.log(`    Response status: ${response.statusCode}`);
+            Log.withUrl(url, urlIndex, 'failed download');
+            Log.spaced(`response code: ${response.statusCode}`);
             return;
     }
 }
