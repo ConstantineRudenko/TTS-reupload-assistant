@@ -11,11 +11,12 @@
                 "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Mods/",
                 "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Backup_tmp",
                 "--timeout=500",
-                "--simultaneous=5",
+                "--simultaneous=1",
                 "--no-links"
             ],
             "runtimeExecutable": "node",
-            "skipFiles": ["<node_internals>/**"],
+            //"skipFiles": ["<node_internals>/**"],
+            "skipFiles": [],
             "smartStep": true,
             "sourceMaps": true,
             "type": "node"

@@ -105,7 +105,7 @@ async function urlResponse(
             let newUrl: URL;
             try {
                 newUrl = new URL(response.headers['location']);
-            } catch {
+            } catch (err) {
                 try {
                     const oldUrl = new URL(url);
                     newUrl = new URL(
@@ -120,6 +120,7 @@ async function urlResponse(
                 }
             }
             await downloadFile(filePath, newUrl.href, urlIndex, args);
+            resolve(null);
             return;
         }
         default:

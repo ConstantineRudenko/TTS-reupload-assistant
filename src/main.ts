@@ -9,6 +9,10 @@ import path from 'path';
 import { printUrl } from './printUrl';
 import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue';
 
+process.on('uncaughtException', function (err) {
+    console.log(`Caught exception: ${err.message}`);
+});
+
 void (async function () {
     const args = parseArgs();
 

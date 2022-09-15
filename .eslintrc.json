@@ -32,9 +32,9 @@
         },
         {
             "files": ["*.js"],
-            "plugins": ["no-floating-promise"],
+            //"plugins": ["no-floating-promise"],
             "rules": {
-                "no-floating-promise/no-floating-promise": 2
+                //"no-floating-promise/no-floating-promise": 2
             }
         }
     ]
