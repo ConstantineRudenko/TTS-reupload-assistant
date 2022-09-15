@@ -48,7 +48,7 @@ Output:
         cacheFolder: opts["<tts-cache-folder>"],
         noLinks: opts["--no-links"],
         timeout: parseTimeout(opts["--timeout"]),
-        simultaneous: parseSimultaneous(opts["--timeout"]),
+        simultaneous: parseSimultaneous(opts["--simultaneous"]),
     };
 }
 
