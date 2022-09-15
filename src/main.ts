@@ -1,99 +1,87 @@
+import "./lib/extendBuildin";
+import { Cache } from "./enumerateCachedFiles";
+import downloadFile from "./downloadFile";
 import extractUrls from "./extractUrls";
-import fsPromises from "fs/promises";
 import fs from "fs";
+import fsPromises from "fs/promises";
 import parseArgs from "./parseArgs";
 import path from "path";
-import urlToCachedFname from "./urlToCachedFname";
-
-import downloadFile from "./downloadFile";
-import enumerateCachedFiles from "./enumerateCachedFiles";
-
-declare global {
-    interface String {
-        replaceAll(searchValue: string | RegExp, replaceValue: string): string;
-    }
-}
+import { runDownloadTasks, UrlDownloadTask } from "./runDownloadQueue";
+import { printUrl } from "./printUrl";
 
 (async function () {
     const args = parseArgs();
 
     let saveFileContent = fs.readFileSync(args.saveFilePath, "utf-8");
     const urls = extractUrls(saveFileContent);
+    const unprocessedUrls = urls.slice();
 
-    const cachedFiles = enumerateCachedFiles(args.cacheFolder);
+    const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
 
-    const promises = urls.map(function (url, urlIndex) {
+    const downloadTasks: UrlDownloadTask[] = urls.map(function (
+        url,
+        urlIndex
+    ): UrlDownloadTask {
         console.log(`queued for processing:`);
-        console.log(`    ${url}`);
+        printUrl(urlIndex, url);
 
-        return new Promise(async function (resolve, reject) {
-            const filePath = path.join(args.tmpPath, String(urlIndex));
+        return {
+            url: url,
+            urlIndex: urlIndex,
+            started: NaN,
+            func: async function () {
+                const filePath = path.join(args.tmpPath, String(urlIndex));
 
-            const exists = await new Promise((resolve) =>
-                fsPromises
-                    .access(filePath, fs.constants.F_OK)
-                    .then(() => {
-                        resolve(true);
-                    })
-                    .catch(() => {
-                        resolve(false);
-                    })
-            );
-
-            if (exists) {
-                resolve(null);
-                return;
-            }
-
-            const cachedInstances = cachedFiles.filter(
-                (cachedFile) => cachedFile.cachedFname == urlToCachedFname(url)
-            );
-
-            if (cachedInstances.length == 2) {
-                if (
-                    cachedInstances[0].fullPath.slice(-4).toLowerCase() ==
-                        ".jpg" &&
-                    cachedInstances[1].fullPath.slice(-4).toLowerCase() ==
-                        ".png"
-                ) {
-                    cachedInstances.splice(1, 1);
-                }
-            }
-
-            if (cachedInstances.length > 1) {
-                throw new Error(
-                    `duplicate cache entires:\n    ${JSON.stringify(
-                        cachedInstances,
-                        null,
-                        2
-                    )}`
+                const exists = await new Promise((resolve) =>
+                    fsPromises
+                        .access(filePath, fs.constants.F_OK)
+                        .then(() => {
+                            resolve(true);
+                        })
+                        .catch(() => {
+                            resolve(false);
+                        })
                 );
-            }
 
-            if (cachedInstances.length == 1) {
-                if (args.noLinks) {
-                    await fsPromises.copyFile(
-                        cachedInstances[0].fullPath,
-                        filePath
-                    );
-                } else {
-                    await fsPromises.symlink(
-                        cachedInstances[0].fullPath,
-                        filePath
-                    );
+                if (exists) {
+                    console.log(`file exists:`);
+                    printUrl(urlIndex, url);
+                    unprocessedUrls.remove(url);
+                    return;
                 }
 
-                resolve(null);
-                console.log(`picked cached file:`);
-                console.log(`    ${url}`);
-                return;
-            }
+                const cachedInstance = Cache.getCachedInstance(
+                    cachedFiles,
+                    url
+                );
 
-            downloadFile(filePath, url, args, resolve, reject);
-        });
+                if (cachedInstance != null) {
+                    if (args.noLinks) {
+                        await fsPromises.copyFile(
+                            cachedInstance.fullPath,
+                            filePath
+                        );
+                    } else {
+                        await fsPromises.symlink(
+                            cachedInstance.fullPath,
+                            filePath
+                        );
+                    }
+
+                    console.log(`picked cached file:`);
+                    printUrl(urlIndex, url);
+                    unprocessedUrls.remove(url);
+                    return;
+                }
+
+                downloadFile(filePath, url, urlIndex, args);
+            },
+        };
     });
 
-    await Promise.all(promises);
+    await runDownloadTasks(downloadTasks);
+
+    console.log("editing save file...");
 
     urls.forEach(function (url, urlIndex) {
         const filePath = path.join(args.tmpPath, String(urlIndex));
@@ -106,6 +94,9 @@ declare global {
             `"file:///${filePath}"`.replaceAll("\\", "/")
         );
     });
+
+    console.log("finished editing save file");
+    console.log("writing new save file");
 
     fs.writeFileSync(`${args.saveFilePath}.edited`, saveFileContent);
 
