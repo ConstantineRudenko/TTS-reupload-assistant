@@ -14,6 +14,9 @@ export default function downloadFile(
 ) {
     let protocol: typeof http | typeof https = null;
 
+    console.log(`queued for downloading:`);
+    console.log(`    ${url}`);
+
     switch (true) {
         case url.slice(0, 7) == "http://":
             protocol = http;

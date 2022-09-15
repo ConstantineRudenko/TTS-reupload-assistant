@@ -23,6 +23,9 @@ declare global {
     const cachedFiles = enumerateCachedFiles(args.cacheFolder);
 
     const promises = urls.map(function (url, urlIndex) {
+        console.log(`queued for processing:`);
+        console.log(`    ${url}`);
+
         return new Promise(async function (resolve, reject) {
             const filePath = path.join(args.tmpPath, String(urlIndex));
 
@@ -82,7 +85,7 @@ declare global {
         }
 
         saveFileContent = saveFileContent.replaceAll(
-            url,
+            `"${url}"`,
             `file:///${filePath}`.replaceAll("\\", "/")
         );
     });
