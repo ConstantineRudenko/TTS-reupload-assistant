@@ -49,8 +49,25 @@ declare global {
                 (cachedFile) => cachedFile.cachedFname == urlToCachedFname(url)
             );
 
+            if (cachedInstances.length == 2) {
+                if (
+                    cachedInstances[0].fullPath.slice(-4).toLowerCase() ==
+                        ".jpg" &&
+                    cachedInstances[1].fullPath.slice(-4).toLowerCase() ==
+                        ".png"
+                ) {
+                    cachedInstances.splice(1, 1);
+                }
+            }
+
             if (cachedInstances.length > 1) {
-                throw new Error("duplicate cache entires");
+                throw new Error(
+                    `duplicate cache entires:\n    ${JSON.stringify(
+                        cachedInstances,
+                        null,
+                        2
+                    )}`
+                );
             }
 
             if (cachedInstances.length == 1) {
