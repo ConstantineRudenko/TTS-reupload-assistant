@@ -86,7 +86,7 @@ declare global {
 
         saveFileContent = saveFileContent.replaceAll(
             `"${url}"`,
-            `file:///${filePath}`.replaceAll("\\", "/")
+            `"file:///${filePath}"`.replaceAll("\\", "/")
         );
     });
 
