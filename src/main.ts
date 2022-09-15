@@ -76,7 +76,7 @@ import { printUrl } from "./printUrl";
         };
     });
 
-    await runDownloadTasks(downloadTasks);
+    await runDownloadTasks(downloadTasks, args);
 
     console.log("editing save file...");
 

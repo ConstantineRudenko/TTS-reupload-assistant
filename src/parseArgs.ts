@@ -7,6 +7,7 @@ export interface Args {
     cacheFolder: string;
     noLinks: boolean;
     timeout: number;
+    simultaneous: number;
 }
 
 export default function parseArgs(): Args {
@@ -33,6 +34,8 @@ Options:
     --timeout=T  [default: 3000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
+	--simultaneous=N [default: 5]
+		How many files should be downloaded simultaneously.
 
 Output:
     Will be placed next to the original file with ".edited"
@@ -45,7 +48,19 @@ Output:
         cacheFolder: opts["<tts-cache-folder>"],
         noLinks: opts["--no-links"],
         timeout: parseTimeout(opts["--timeout"]),
+        simultaneous: parseSimultaneous(opts["--timeout"]),
     };
+}
+
+function parseSimultaneous(sSimultaneous: string): number {
+    let simultaneous = Number(sSimultaneous);
+    switch (true) {
+        case isNaN(simultaneous):
+        case simultaneous < 0:
+            console.log("Invalid number of simultaneous downloads.");
+            process.exit();
+    }
+    return simultaneous;
 }
 
 function parseTimeout(sTimeout: string): number {

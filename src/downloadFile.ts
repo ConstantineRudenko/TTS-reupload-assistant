@@ -25,21 +25,21 @@ export default async function downloadFile(
             protocol = https;
             break;
         case url.slice(0, 8) == "file:///":
-            (async function () {
-                if (args.noLinks) {
-                    await fsPromises.copyFile(url.slice(8), filePath);
-                } else {
-                    await fsPromises.symlink(url.slice(8), filePath);
-                }
-                console.log(`picked local file:`);
-                printUrl(urlIndex, url);
-            })();
+            if (args.noLinks) {
+                await fsPromises.copyFile(url.slice(8), filePath);
+            } else {
+                await fsPromises.symlink(url.slice(8), filePath);
+            }
+
+            console.log(`picked local file:`);
+            printUrl(urlIndex, url);
+
             return;
         default:
             return;
     }
 
-    await new Promise(async (resolve) => {
+    await new Promise((resolve) => {
         protocol
             .get(
                 url,

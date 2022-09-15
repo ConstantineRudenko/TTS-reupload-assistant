@@ -1,4 +1,5 @@
 import "./lib/extendBuildin";
+import { Args } from "./parseArgs";
 import { printUrl } from "./printUrl";
 
 export interface UrlDownloadTask {
@@ -8,16 +9,14 @@ export interface UrlDownloadTask {
     started: number;
 }
 
-export async function runDownloadTasks(taskArr: UrlDownloadTask[]) {
-    const simultaneous = 5;
-
+export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
     taskArr = taskArr.slice(); // local copy
     taskArr.reverse();
 
     const taskArrActive: UrlDownloadTask[] = [];
 
     await Promise.all(
-        Array(simultaneous)
+        Array(args.simultaneous)
             .fill(0)
             .map(() =>
                 (async () => {
