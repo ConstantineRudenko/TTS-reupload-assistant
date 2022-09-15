@@ -11,8 +11,8 @@
                 "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Mods/",
                 "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Backup_tmp",
                 "--timeout=500",
-                "--no-links",
-                "--simultanenous=1"
+                "--simultaneous=1",
+                "--no-links"
             ],
             "runtimeExecutable": "node",
             "skipFiles": ["<node_internals>/**"],
