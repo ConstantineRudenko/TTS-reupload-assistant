@@ -48,15 +48,18 @@ export default async function downloadFile(
                     timeout: args.timeout,
                     //headers: { Connection: "keep-alive" },
                 },
-                (response) =>
-                    void urlResponse(
-                        response,
-                        url,
-                        urlIndex,
-                        args,
-                        filePath,
-                        resolve
-                    )
+                (response) => {
+                    void (async () => {
+                        await urlResponse(
+                            response,
+                            url,
+                            urlIndex,
+                            args,
+                            filePath
+                        );
+                        resolve(null);
+                    })();
+                }
             )
             .on('error', (err) => {
                 console.log('download error:');
@@ -71,8 +74,7 @@ async function urlResponse(
     url: string,
     urlIndex: number,
     args: Args,
-    filePath: string,
-    resolve: (any) => void
+    filePath: string
 ) {
     switch (response.statusCode) {
         case 200: {
@@ -81,18 +83,21 @@ async function urlResponse(
             });
             response.pipe(file);
 
-            file.on('finish', () => {
-                console.log('downloaded successfully');
-                resolve(null);
+            await new Promise((resolve) => {
+                file.on('finish', () => {
+                    console.log('downloaded successfully');
+                    resolve(null);
+                });
+
+                file.on('error', () => {
+                    console.log('file error');
+                    resolve(null);
+                    fs.unlink(filePath, (err) => {
+                        throw err;
+                    });
+                });
             });
 
-            file.on('error', () => {
-                console.log('file error');
-                fs.unlink(filePath, (err) => {
-                    throw err;
-                });
-                resolve(null);
-            });
             return;
         }
         case 301:
@@ -115,18 +120,15 @@ async function urlResponse(
                 } catch (err) {
                     console.log('failed:');
                     console.log(`    error: ${(err as Error).message}`);
-                    resolve(null);
                     return;
                 }
             }
             await downloadFile(filePath, newUrl.href, urlIndex, args);
-            resolve(null);
             return;
         }
         default:
             console.log('failed:');
             console.log(`    Response status: ${response.statusCode}`);
-            resolve(null);
             return;
     }
 }
