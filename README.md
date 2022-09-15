@@ -9,11 +9,11 @@ Usage:
 Arguments:
     <tts-save-file>
         TTS save file to be processed.
-        Example:	"Documents/My Games/Tabletop Simulator/
+        Example:    "Documents/My Games/Tabletop Simulator/
                       Saves/TS_Save_96.json"
     <tts-cache-folder>
         TTS local mod cache.
-        Example:	"Documents/My Games/Tabletop Simulator/Mods/"		
+        Example:    "Documents/My Games/Tabletop Simulator/Mods/"
     <temp-folder>
         Any folder to hold the downloaded files.
 
@@ -24,7 +24,9 @@ Options:
     --timeout=T  [default: 3000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
-        
+    --simultaneous=N [default: 5]
+        How many files should be downloaded simultaneously.
+
 Output:
     Will be placed next to the original file with ".edited"
     added to the name.
