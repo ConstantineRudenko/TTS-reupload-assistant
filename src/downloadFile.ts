@@ -46,7 +46,7 @@ export default async function downloadFile(
                 // https://github.com/nodejs/node/issues/39341
                 {
                     timeout: args.timeout,
-                    headers: { Connection: "keep-alive" },
+                    //headers: { Connection: "keep-alive" },
                 },
                 (response) =>
                     urlResponse(
@@ -87,8 +87,10 @@ function urlResponse(
             });
 
             file.on("error", () => {
-                fs.unlinkSync(filePath);
                 console.log(`file error`);
+                fs.unlink(filePath, (err) => {
+                    throw err;
+                });
                 resolve(null);
             });
             return;

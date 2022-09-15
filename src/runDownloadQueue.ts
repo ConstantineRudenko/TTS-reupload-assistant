@@ -15,6 +15,9 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 
     const taskArrActive: UrlDownloadTask[] = [];
 
+    console.log(`    queue size: ${taskArr.length}`);
+    console.log(`    simultaneous downloads: ${args.simultaneous}`);
+
     await Promise.all(
         Array(args.simultaneous)
             .fill(0)
@@ -36,10 +39,6 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
                         printUrl(promiseInfo.urlIndex, promiseInfo.url);
 
                         taskArrActive.remove(promiseInfo);
-                    }
-
-                    if (taskArrActive.length == 0) {
-                        console.log("end of the download queue");
                     }
                 })()
             )

@@ -76,8 +76,11 @@ import { printUrl } from "./printUrl";
         };
     });
 
+    console.log("initating the download queue...");
+
     await runDownloadTasks(downloadTasks, args);
 
+    console.log("end of the download queue");
     console.log("editing save file...");
 
     urls.forEach(function (url, urlIndex) {
@@ -97,5 +100,5 @@ import { printUrl } from "./printUrl";
 
     fs.writeFileSync(`${args.saveFilePath}.edited`, saveFileContent);
 
-    console.log("finished writing save file");
+    console.log("finished writing new save file");
 })();

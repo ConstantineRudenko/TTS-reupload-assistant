@@ -56,8 +56,9 @@ function parseSimultaneous(sSimultaneous: string): number {
     let simultaneous = Number(sSimultaneous);
     switch (true) {
         case isNaN(simultaneous):
-        case simultaneous < 0:
+        case simultaneous <= 0:
             console.log("Invalid number of simultaneous downloads.");
+            console.log(sSimultaneous);
             process.exit();
     }
     return simultaneous;
@@ -67,7 +68,7 @@ function parseTimeout(sTimeout: string): number {
     let timeout = Number(sTimeout);
     switch (true) {
         case isNaN(timeout):
-        case timeout < 0:
+        case timeout <= 0:
             console.log("Invalid timeout provided");
             process.exit();
     }
