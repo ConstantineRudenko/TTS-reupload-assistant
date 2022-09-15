@@ -1,6 +1,6 @@
-import "./lib/extendBuildin";
-import { Args } from "./parseArgs";
-import { printUrl } from "./printUrl";
+import './lib/extendBuildin';
+import { Args } from './parseArgs';
+import { printUrl } from './printUrl';
 
 export interface UrlDownloadTask {
     func: () => Promise<any>;
@@ -30,12 +30,12 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 
                         printQueue(taskArrActive);
 
-                        console.log("queued url download:");
+                        console.log('queued url download:');
                         printUrl(promiseInfo.urlIndex, promiseInfo.url);
 
                         await promiseInfo.func();
 
-                        console.log("processed url:");
+                        console.log('processed url:');
                         printUrl(promiseInfo.urlIndex, promiseInfo.url);
 
                         taskArrActive.remove(promiseInfo);
@@ -59,6 +59,6 @@ function printQueue(promiseInfoArrActive: UrlDownloadTask[]) {
             printUrl(promiseInfo.urlIndex, promiseInfo.url);
         });
     } else {
-        console.log("no tasks left");
+        console.log('no tasks left');
     }
 }

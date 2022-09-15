@@ -1,18 +1,18 @@
-import "./lib/extendBuildin";
-import { Cache } from "./enumerateCachedFiles";
-import downloadFile from "./downloadFile";
-import extractUrls from "./extractUrls";
-import fs from "fs";
-import fsPromises from "fs/promises";
-import parseArgs from "./parseArgs";
-import path from "path";
-import { runDownloadTasks, UrlDownloadTask } from "./runDownloadQueue";
-import { printUrl } from "./printUrl";
+import './lib/extendBuildin';
+import * as Cache from './enumerateCachedFiles';
+import downloadFile from './downloadFile';
+import extractUrls from './extractUrls';
+import fs from 'fs';
+import fsPromises from 'fs/promises';
+import parseArgs from './parseArgs';
+import path from 'path';
+import { printUrl } from './printUrl';
+import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue';
 
-(async function () {
+void (async function () {
     const args = parseArgs();
 
-    let saveFileContent = fs.readFileSync(args.saveFilePath, "utf-8");
+    let saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
     const urls = extractUrls(saveFileContent);
 
     const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
@@ -21,7 +21,7 @@ import { printUrl } from "./printUrl";
         url,
         urlIndex
     ): UrlDownloadTask {
-        console.log(`queued for processing:`);
+        console.log('queued for processing:');
         printUrl(urlIndex, url);
 
         return {
@@ -31,19 +31,20 @@ import { printUrl } from "./printUrl";
             func: async function () {
                 const filePath = path.join(args.tmpPath, String(urlIndex));
 
-                const exists = await new Promise((resolve) =>
-                    fsPromises
-                        .access(filePath, fs.constants.F_OK)
-                        .then(() => {
-                            resolve(true);
-                        })
-                        .catch(() => {
-                            resolve(false);
-                        })
+                const exists = await new Promise(
+                    (resolve) =>
+                        void fsPromises
+                            .access(filePath, fs.constants.F_OK)
+                            .then(() => {
+                                resolve(true);
+                            })
+                            .catch(() => {
+                                resolve(false);
+                            })
                 );
 
                 if (exists) {
-                    console.log(`file exists:`);
+                    console.log('file exists:');
                     printUrl(urlIndex, url);
                     return;
                 }
@@ -66,7 +67,7 @@ import { printUrl } from "./printUrl";
                         );
                     }
 
-                    console.log(`picked cached file:`);
+                    console.log('picked cached file:');
                     printUrl(urlIndex, url);
                     return;
                 }
@@ -76,12 +77,12 @@ import { printUrl } from "./printUrl";
         };
     });
 
-    console.log("initating the download queue...");
+    console.log('initating the download queue...');
 
     await runDownloadTasks(downloadTasks, args);
 
-    console.log("end of the download queue");
-    console.log("editing save file...");
+    console.log('end of the download queue');
+    console.log('editing save file...');
 
     urls.forEach(function (url, urlIndex) {
         const filePath = path.join(args.tmpPath, String(urlIndex));
@@ -91,14 +92,14 @@ import { printUrl } from "./printUrl";
 
         saveFileContent = saveFileContent.replaceAll(
             `"${url}"`,
-            `"file:///${filePath}"`.replaceAll("\\", "/")
+            `"file:///${filePath}"`.replaceAll('\\', '/')
         );
     });
 
-    console.log("finished editing save file");
-    console.log("writing new save file...");
+    console.log('finished editing save file');
+    console.log('writing new save file...');
 
     fs.writeFileSync(`${args.saveFilePath}.edited`, saveFileContent);
 
-    console.log("finished writing new save file");
+    console.log('finished writing new save file');
 })();

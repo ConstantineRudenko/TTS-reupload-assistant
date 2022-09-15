@@ -1,0 +1,41 @@
+{
+    "parser": "@typescript-eslint/parser",
+    "plugins": [],
+    "rules": {
+        "quotes": [2, "single"],
+        "no-tabs": 2,
+        "indent": [2, 4, { "SwitchCase": 1 }],
+        "sort-imports": [
+            "error",
+            {
+                "ignoreCase": true,
+                "allowSeparatedGroups": false,
+                "memberSyntaxSortOrder": ["none", "all", "single", "multiple"]
+            }
+        ]
+    },
+    "extends": ["eslint:recommended"],
+    "overrides": [
+        {
+            "files": ["*.ts"],
+            "extends": [
+                "plugin:@typescript-eslint/recommended",
+                "plugin:@typescript-eslint/recommended-requiring-type-checking"
+            ],
+            "plugins": ["@typescript-eslint"],
+            "rules": {
+                "@typescript-eslint/no-floating-promises": 2
+            },
+            "parserOptions": {
+                "project": ["./tsconfig.json"]
+            }
+        },
+        {
+            "files": ["*.js"],
+            "plugins": ["no-floating-promise"],
+            "rules": {
+                "no-floating-promise/no-floating-promise": 2
+            }
+        }
+    ]
+}

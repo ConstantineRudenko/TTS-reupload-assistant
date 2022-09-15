@@ -1,10 +1,10 @@
-import { Args } from "./parseArgs";
-import { URL } from "url";
-import fs from "fs";
-import fsPromises from "fs/promises";
-import http from "http";
-import https from "https";
-import { printUrl } from "./printUrl";
+import { Args } from './parseArgs';
+import fs from 'fs';
+import fsPromises from 'fs/promises';
+import http from 'http';
+import https from 'https';
+import { printUrl } from './printUrl';
+import { URL } from 'url';
 
 export default async function downloadFile(
     filePath: string,
@@ -14,24 +14,24 @@ export default async function downloadFile(
 ) {
     let protocol: typeof http | typeof https = null;
 
-    console.log(`started downloading:`);
+    console.log('started downloading:');
     printUrl(urlIndex, url);
 
     switch (true) {
-        case url.slice(0, 7) == "http://":
+        case url.slice(0, 7) == 'http://':
             protocol = http;
             break;
-        case url.slice(0, 8) == "https://":
+        case url.slice(0, 8) == 'https://':
             protocol = https;
             break;
-        case url.slice(0, 8) == "file:///":
+        case url.slice(0, 8) == 'file:///':
             if (args.noLinks) {
                 await fsPromises.copyFile(url.slice(8), filePath);
             } else {
                 await fsPromises.symlink(url.slice(8), filePath);
             }
 
-            console.log(`picked local file:`);
+            console.log('picked local file:');
             printUrl(urlIndex, url);
 
             return;
@@ -49,7 +49,7 @@ export default async function downloadFile(
                     //headers: { Connection: "keep-alive" },
                 },
                 (response) =>
-                    urlResponse(
+                    void urlResponse(
                         response,
                         url,
                         urlIndex,
@@ -58,8 +58,8 @@ export default async function downloadFile(
                         resolve
                     )
             )
-            .on("error", (err) => {
-                console.log(`download error:`);
+            .on('error', (err) => {
+                console.log('download error:');
                 console.log(`    ${err.message}`);
                 resolve(null);
             });
@@ -75,53 +75,55 @@ async function urlResponse(
     resolve: (any) => void
 ) {
     switch (response.statusCode) {
-        case 200:
-            let file = fs.createWriteStream(filePath, {
+        case 200: {
+            const file = fs.createWriteStream(filePath, {
                 autoClose: true,
             });
             response.pipe(file);
 
-            file.on("finish", () => {
-                console.log(`downloaded successfully`);
+            file.on('finish', () => {
+                console.log('downloaded successfully');
                 resolve(null);
             });
 
-            file.on("error", () => {
-                console.log(`file error`);
+            file.on('error', () => {
+                console.log('file error');
                 fs.unlink(filePath, (err) => {
                     throw err;
                 });
                 resolve(null);
             });
             return;
+        }
         case 301:
-        case 302:
-            console.log(`file moved:`);
+        case 302: {
+            console.log('file moved:');
             console.log(`    [${urlIndex}]`);
             console.log(`    old: ${url}`);
-            console.log(`    new: ${response.headers["location"]}`);
+            console.log(`    new: ${response.headers['location']}`);
 
             let newUrl: URL;
             try {
-                newUrl = new URL(response.headers["location"]);
+                newUrl = new URL(response.headers['location']);
             } catch {
                 try {
                     const oldUrl = new URL(url);
                     newUrl = new URL(
-                        `${oldUrl.protocol}//${oldUrl.hostname}${response.headers["location"]}`
+                        `${oldUrl.protocol}//${oldUrl.hostname}${response.headers['location']}`
                     );
                     console.log(`    full: ${newUrl.href}`);
                 } catch (err) {
-                    console.log(`failed:`);
-                    console.log(`    error: ${err.message}`);
+                    console.log('failed:');
+                    console.log(`    error: ${(err as Error).message}`);
                     resolve(null);
                     return;
                 }
             }
             await downloadFile(filePath, newUrl.href, urlIndex, args);
             return;
+        }
         default:
-            console.log(`failed:`);
+            console.log('failed:');
             console.log(`    Response status: ${response.statusCode}`);
             resolve(null);
             return;
