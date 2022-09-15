@@ -14,7 +14,6 @@ import { printUrl } from "./printUrl";
 
     let saveFileContent = fs.readFileSync(args.saveFilePath, "utf-8");
     const urls = extractUrls(saveFileContent);
-    const unprocessedUrls = urls.slice();
 
     const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
 
@@ -46,7 +45,6 @@ import { printUrl } from "./printUrl";
                 if (exists) {
                     console.log(`file exists:`);
                     printUrl(urlIndex, url);
-                    unprocessedUrls.remove(url);
                     return;
                 }
 
@@ -70,7 +68,6 @@ import { printUrl } from "./printUrl";
 
                     console.log(`picked cached file:`);
                     printUrl(urlIndex, url);
-                    unprocessedUrls.remove(url);
                     return;
                 }
 

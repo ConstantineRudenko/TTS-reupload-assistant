@@ -95,6 +95,7 @@ function urlResponse(
         case 301:
         case 302:
             console.log(`file moved:`);
+            console.log(`    [${urlIndex}]`);
             console.log(`    old: ${url}`);
             console.log(`    new: ${response.headers["location"]}`);
 
