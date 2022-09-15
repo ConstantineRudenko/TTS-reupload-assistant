@@ -66,7 +66,7 @@ export default async function downloadFile(
     });
 }
 
-function urlResponse(
+async function urlResponse(
     response: http.IncomingMessage,
     url: string,
     urlIndex: number,
@@ -118,7 +118,7 @@ function urlResponse(
                     return;
                 }
             }
-            downloadFile(filePath, newUrl.href, urlIndex, args);
+            await downloadFile(filePath, newUrl.href, urlIndex, args);
             return;
         default:
             console.log(`failed:`);
