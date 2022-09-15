@@ -74,7 +74,7 @@ import { printUrl } from "./printUrl";
                     return;
                 }
 
-                downloadFile(filePath, url, urlIndex, args);
+                await downloadFile(filePath, url, urlIndex, args);
             },
         };
     });
@@ -96,9 +96,9 @@ import { printUrl } from "./printUrl";
     });
 
     console.log("finished editing save file");
-    console.log("writing new save file");
+    console.log("writing new save file...");
 
     fs.writeFileSync(`${args.saveFilePath}.edited`, saveFileContent);
 
-    console.log("finished");
+    console.log("finished writing save file");
 })();
