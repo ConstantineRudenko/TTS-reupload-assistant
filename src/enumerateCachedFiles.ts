@@ -13,7 +13,7 @@ export interface CachedFileRecord {
 export function getCachedInstance(
     cachedFiles: CachedFileRecord[],
     url: string
-): CachedFileRecord {
+): CachedFileRecord | null {
     const cachedInstances = cachedFiles.filter(
         (cachedFile) => cachedFile.cachedFname == urlToCachedFname(url)
     );
@@ -60,7 +60,7 @@ export function enumerateCachedFiles(dir: string) {
         .forEach((subdir) =>
             fs.readdirSync(path.join(dir, subdir)).forEach((fname) => {
                 const splitFname = fname.split('.');
-                let fnameNoExt: string = null;
+                let fnameNoExt: string | null = null;
                 if (splitFname == null) {
                     fnameNoExt = fname;
                 } else {

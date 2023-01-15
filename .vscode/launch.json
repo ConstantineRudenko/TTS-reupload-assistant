@@ -7,9 +7,9 @@
             "program": "${workspaceFolder}/src/main.ts",
             "request": "launch",
             "args": [
-                "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Saves/TS_Save_105.json",
+                "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Saves/TS_Save_106.json",
                 "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Mods/",
-                "%USERPROFILE%/Documents/My Games/Tabletop Simulator/Backup_tmp",
+                "%USERPROFILE%/Documents/My Games/Tabletop Simulator/ModBackup",
                 "--timeout=500",
                 "--simultaneous=5",
                 "--no-links"

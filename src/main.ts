@@ -18,6 +18,10 @@ void (async function () {
 
     let saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
     const urls = extractUrls(saveFileContent);
+    Log.spaced(`URLs detected: ${urls.length}`);
+    urls.forEach((url, id) => {
+        Log.withUrl(url, id);
+    });
 
     const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
 

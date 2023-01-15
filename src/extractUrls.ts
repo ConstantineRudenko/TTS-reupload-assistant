@@ -1,5 +1,5 @@
 export default function extractUrls(saveFileContent: string): string[] {
-    const regexUrl = /URL": "([a-zA-Z0-9._~:/?#@!$&'()*+,;%=\-[\]]+)"/g;
+    const regexUrl = /URL": "([a-zA-Z0-9._~:/?#@!$&'()*+,;%=\-[\]\s]+)"/g;
 
     return [
         ...new Set(

@@ -12,7 +12,7 @@ export default async function downloadFile(
     urlIndex: number,
     args: Args
 ) {
-    let protocol: typeof http | typeof https = null;
+    let protocol: typeof http | typeof https | undefined = undefined;
 
     Log.withUrl(url, urlIndex, 'started downloading');
 
@@ -38,7 +38,7 @@ export default async function downloadFile(
     }
 
     await new Promise((resolve) => {
-        protocol
+        protocol!
             .get(
                 url,
                 // https://github.com/nodejs/node/issues/39341
@@ -109,7 +109,7 @@ async function urlResponse(
 
             let newUrl: URL;
             try {
-                newUrl = new URL(response.headers['location']);
+                newUrl = new URL(response.headers['location'] ?? 'error');
                 Log.spaced(`new:\n${response.headers['location']}`);
             } catch {
                 try {

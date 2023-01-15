@@ -24,7 +24,7 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
             .map(() =>
                 (async () => {
                     while (taskArr.length > 0) {
-                        const promiseInfo = taskArr.pop();
+                        const promiseInfo: UrlDownloadTask = taskArr.pop()!;
                         taskArrActive.push(promiseInfo);
                         promiseInfo.started = Date.now();
 
