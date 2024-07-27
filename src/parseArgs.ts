@@ -2,30 +2,30 @@ import { docopt } from 'docopt';
 import process from 'process';
 
 interface ArgsRaw {
-    '<tts-save-file>': string;
-    '<tts-cache-folder>': string;
-    '<temp-folder>': string;
+	'<tts-save-file>': string;
+	'<tts-cache-folder>': string;
+	'<temp-folder>': string;
 
-    '--timeout': string;
-    '--simultaneous': string;
+	'--timeout': string;
+	'--simultaneous': string;
 
-    '--no-links': string;
+	'--no-links': string;
 }
 
 export interface Args {
-    saveFilePath: string;
-    cacheFolder: string;
-    tmpPath: string;
+	saveFilePath: string;
+	cacheFolder: string;
+	tmpPath: string;
 
-    timeout: number;
-    simultaneous: number;
+	timeout: number;
+	simultaneous: number;
 
-    noLinks: boolean;
+	noLinks: boolean;
 }
 
 export default function parseArgs(): Args {
-    const opts = docopt(
-        `TTS reupload helper
+	const opts = docopt(
+		`TTS reupload helper
 Usage:
     reup.js <tts-save-file> <tts-cache-folder> <temp-folder> [options]
 
@@ -53,37 +53,37 @@ Options:
 Output:
     Will be placed next to the original file with ".edited"
     added to the name.`
-    ) as ArgsRaw;
+	) as ArgsRaw;
 
-    return {
-        saveFilePath: opts['<tts-save-file>'],
-        tmpPath: opts['<temp-folder>'],
-        cacheFolder: opts['<tts-cache-folder>'],
-        noLinks: Boolean(opts['--no-links']),
-        timeout: parseTimeout(opts['--timeout']),
-        simultaneous: parseSimultaneous(opts['--simultaneous']),
-    };
+	return {
+		saveFilePath: opts['<tts-save-file>'],
+		tmpPath: opts['<temp-folder>'],
+		cacheFolder: opts['<tts-cache-folder>'],
+		noLinks: Boolean(opts['--no-links']),
+		timeout: parseTimeout(opts['--timeout']),
+		simultaneous: parseSimultaneous(opts['--simultaneous'] ?? '5'),
+	};
 }
 
 function parseSimultaneous(sSimultaneous: string): number {
-    const simultaneous = Number(sSimultaneous);
-    switch (true) {
-        case isNaN(simultaneous):
-        case simultaneous <= 0:
-            console.log('Invalid number of simultaneous downloads.');
-            console.log(sSimultaneous);
-            process.exit();
-    }
-    return simultaneous;
+	const simultaneous = Number(sSimultaneous);
+	switch (true) {
+		case isNaN(simultaneous):
+		case simultaneous <= 0:
+			console.log('Invalid number of simultaneous downloads.');
+			console.log(sSimultaneous);
+			process.exit();
+	}
+	return simultaneous;
 }
 
 function parseTimeout(sTimeout: string): number {
-    const timeout = Number(sTimeout);
-    switch (true) {
-        case isNaN(timeout):
-        case timeout <= 0:
-            console.log('Invalid timeout provided');
-            process.exit();
-    }
-    return timeout;
+	const timeout = Number(sTimeout);
+	switch (true) {
+		case isNaN(timeout):
+		case timeout <= 0:
+			console.log('Invalid timeout provided');
+			process.exit();
+	}
+	return timeout;
 }
