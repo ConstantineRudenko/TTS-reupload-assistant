@@ -51,7 +51,7 @@ Options:
         How many files should be downloaded simultaneously.
 
 Output:
-    Will be placed next to the original file with ".edited"
+    Will be placed next to the original file with ".reupload"
     added to the name.`
 	) as ArgsRaw;
 
