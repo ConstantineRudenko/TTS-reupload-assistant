@@ -1,4 +1,5 @@
 import 'MadCakeUtil-ts';
+import 'MadCakeUtil-ts-augmentations';
 import * as Log from './logger.ts';
 import { Args } from './parseArgs.ts';
 

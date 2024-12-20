@@ -10,8 +10,11 @@
     "https://deno.land/x/docopt@v1.0.7/src/token.ts": "fd680a204af72e99361598bdb36ba78cad1f5ac3e9acf70ff13f883c19ad97b7",
     "https://deno.land/x/docopt@v1.0.7/src/utils.ts": "52c2a03c68a0ecfe70146e1183ae55bac632dbaf094cf13efdcf2deb178c507d",
     "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/StrictEventTarget.ts": "b21b4160f90c826fcaa8b6ce391e943c6c16d931b281413adf3f63a85642a17a",
+    "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/augmentations.ts": "60d8c63b1489c8679f2c28aecd0a3755b54714ac8ea858b7715025c21834a84c",
     "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/mod.ts": "1efb3da6956cfd1820c5044533a3879c72e21a0d481794c216797bfd011a5944",
     "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/src/Array.ts": "480dfe13d79227d182f3d18d348530b05cce6f6d7c6fc639b23322d17933f5e8",
+    "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/src/augment-Array.ts": "e4ebca57ff4c7132a56f119d151d694e8b0cc668a47f6c73aef9fefa50de9ad6",
+    "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/src/augment-Console.ts": "05bb53e41ce514cc7e318a4ea7b01765fdb70a70fb29bc4e2f8022706c9dbdf9",
     "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/tsUtil.ts": "34a680e6da57992ebb81e773000581fd672986b12e7c3cb480f387c36b248539",
     "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/useDefer.ts": "ac6744c985b4ca6c30d68895e61ea29ce8c838bfe5b4a7ef2d56f94442ec2d02"
   },
