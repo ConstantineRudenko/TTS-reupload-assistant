@@ -1,5 +1,5 @@
-import { docopt } from 'docopt';
-import process from 'process';
+import docopt from 'docopt';
+import process from 'node:process';
 
 interface ArgsRaw {
 	'<tts-save-file>': string;
@@ -53,7 +53,7 @@ Options:
 Output:
     Will be placed next to the original file with ".reupload"
     added to the name.`
-	) as ArgsRaw;
+	) as unknown as ArgsRaw;
 
 	return {
 		saveFilePath: opts['<tts-save-file>'],

@@ -1,6 +1,6 @@
-import './lib/extendBuiltin';
-import * as Log from './logger';
-import { Args } from './parseArgs';
+import 'MadCakeUtil-ts';
+import * as Log from './logger.ts';
+import { Args } from './parseArgs.ts';
 
 export interface UrlDownloadTask {
 	func: () => Promise<unknown>;

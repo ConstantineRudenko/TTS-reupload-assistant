@@ -1,17 +1,8 @@
-import * as Log from './logger';
-import { Args } from './parseArgs';
-import fsPromises from 'fs/promises';
-import http from 'http';
-import https from 'https';
-import { URL } from 'url';
-import { pipeline } from 'stream/promises';
+import * as Log from './logger.ts';
+import { Args } from './parseArgs.ts';
+import fsPromises from 'node:fs/promises';
 
-async function downloadRemoteFile(
-	filePath: string,
-	url: string,
-	urlIndex: number,
-	args: Args
-) {
+async function downloadRemoteFile(filePath: string, url: string, args: Args) {
 	const abort = new AbortController();
 	setTimeout(() => {
 		abort.abort();
@@ -30,8 +21,6 @@ export default async function downloadFile(
 	urlIndex: number,
 	args: Args
 ) {
-	let protocol: typeof http | typeof https | undefined = undefined;
-
 	Log.withUrl(url, urlIndex, 'started downloading');
 
 	switch (true) {
@@ -47,34 +36,12 @@ export default async function downloadFile(
 			return;
 		default:
 			try {
-				await downloadRemoteFile(filePath, url, urlIndex, args);
+				await downloadRemoteFile(filePath, url, args);
 
 				Log.withUrl(url, urlIndex, 'downloaded file');
-			} catch (err) {
+			} catch (err: any) {
 				Log.withUrl(url, urlIndex, `download error: ${err.message}`);
 			}
 			return;
 	}
-}
-
-function handleRedirect(oldUrlStr: string, response: http.IncomingMessage) {
-	const responseLocation = response.headers['location'];
-	if (!responseLocation) {
-		throw new Error('empty redirect url');
-	}
-	const newUrlStr = responseLocation;
-
-	try {
-		const newUrl = new URL(newUrlStr);
-		Log.spaced(`new:\n${newUrlStr}`);
-		return newUrl;
-	} finally {
-	}
-
-	const oldUrl = new URL(oldUrlStr);
-	Log.spaced(`new (relative):\n${newUrlStr}`);
-	const newUrl = new URL(newUrlStr, oldUrl.host);
-	Log.spaced(`new:\n${newUrl.href}`);
-
-	return newUrl;
 }

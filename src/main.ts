@@ -1,114 +1,101 @@
-import './lib/extendBuiltin';
-import * as Cache from './enumerateCachedFiles';
-import * as Log from './logger';
-import downloadFile from './downloadFile';
-import extractUrls from './extractUrls';
-import fs from 'fs';
-import fsPromises from 'fs/promises';
-import parseArgs from './parseArgs';
-import path from 'path';
-import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue';
+import * as Cache from './enumerateCachedFiles.ts';
+import * as Log from './logger.ts';
+import downloadFile from './downloadFile.ts';
+import extractUrls from './extractUrls.ts';
+import fs from 'node:fs';
+import fsPromises from 'node:fs/promises';
+import parseArgs from './parseArgs.ts';
+import path from 'node:path';
+import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue.ts';
 
-process.on('uncaughtException', function (err) {
-	console.log(`Caught exception: ${err.message}`);
+const args = parseArgs();
+
+let saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
+const urls = extractUrls(saveFileContent);
+Log.spaced(`URLs detected: ${urls.length}`);
+urls.forEach((url, id) => {
+	Log.withUrl(url, id);
 });
 
-void (async function () {
-	const args = parseArgs();
+const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
 
-	let saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
-	const urls = extractUrls(saveFileContent);
-	Log.spaced(`URLs detected: ${urls.length}`);
-	urls.forEach((url, id) => {
-		Log.withUrl(url, id);
-	});
+const downloadTasks: UrlDownloadTask[] = urls.map(function (
+	url,
+	urlIndex
+): UrlDownloadTask {
+	Log.withUrl(url, urlIndex, 'queued for processing');
 
-	const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
+	return {
+		url: url,
+		urlIndex: urlIndex,
+		started: NaN,
+		func: async function () {
+			const filePath = path.join(args.tmpPath, String(urlIndex));
 
-	const downloadTasks: UrlDownloadTask[] = urls.map(function (
-		url,
-		urlIndex
-	): UrlDownloadTask {
-		Log.withUrl(url, urlIndex, 'queued for processing');
+			const exists = await new Promise(
+				(resolve) =>
+					void fsPromises
+						.access(filePath, fs.constants.F_OK)
+						.then(() => {
+							resolve(true);
+						})
+						.catch(() => {
+							resolve(false);
+						})
+			);
 
-		return {
-			url: url,
-			urlIndex: urlIndex,
-			started: NaN,
-			func: async function () {
-				const filePath = path.join(args.tmpPath, String(urlIndex));
+			if (exists) {
+				Log.withUrl(url, urlIndex, 'file exists');
+			}
 
-				const exists = await new Promise(
-					(resolve) =>
-						void fsPromises
-							.access(filePath, fs.constants.F_OK)
-							.then(() => {
-								resolve(true);
-							})
-							.catch(() => {
-								resolve(false);
-							})
-				);
+			const cachedInstance = Cache.getCachedInstance(cachedFiles, url);
 
-				if (exists) {
-					Log.withUrl(url, urlIndex, 'file exists');
+			if (cachedInstance != null) {
+				if (args.noLinks) {
+					await fsPromises.copyFile(
+						cachedInstance.fullPath,
+						filePath
+					);
+				} else {
+					await fsPromises.symlink(cachedInstance.fullPath, filePath);
 				}
 
-				const cachedInstance = Cache.getCachedInstance(
-					cachedFiles,
-					url
-				);
+				Log.withUrl(url, urlIndex, 'picked cache file');
+				return;
+			}
 
-				if (cachedInstance != null) {
-					if (args.noLinks) {
-						await fsPromises.copyFile(
-							cachedInstance.fullPath,
-							filePath
-						);
-					} else {
-						await fsPromises.symlink(
-							cachedInstance.fullPath,
-							filePath
-						);
-					}
+			await downloadFile(filePath, url, urlIndex, args);
+		},
+	};
+});
 
-					Log.withUrl(url, urlIndex, 'picked cache file');
-					return;
-				}
+Log.spaced('initating the download queue...');
 
-				await downloadFile(filePath, url, urlIndex, args);
-			},
-		};
-	});
+await runDownloadTasks(downloadTasks, args);
 
-	Log.spaced('initating the download queue...');
+Log.normal('end of the download queue');
+Log.normal('editing save file...');
 
-	await runDownloadTasks(downloadTasks, args);
+urls.forEach(function (url, urlIndex) {
+	const filePath = path.join(args.tmpPath, String(urlIndex));
+	if (!fs.existsSync(filePath)) {
+		return;
+	}
 
-	Log.normal('end of the download queue');
-	Log.normal('editing save file...');
-
-	urls.forEach(function (url, urlIndex) {
-		const filePath = path.join(args.tmpPath, String(urlIndex));
-		if (!fs.existsSync(filePath)) {
-			return;
-		}
-
-		saveFileContent = saveFileContent.replaceAll(
-			`"${url}"`,
-			`"file:///${filePath}"`.replaceAll('\\', '/')
-		);
-	});
-
-	Log.normal('finished editing save file');
-	Log.normal('writing new save file...');
-
-	const savePath = path.join(
-		path.dirname(args.saveFilePath),
-		`${path.basename(args.saveFilePath, '.json')}.reupload.json`
+	saveFileContent = saveFileContent.replaceAll(
+		`"${url}"`,
+		`"file:///${filePath}"`.replaceAll('\\', '/')
 	);
+});
 
-	fs.writeFileSync(savePath, saveFileContent);
+Log.normal('finished editing save file');
+Log.normal('writing new save file...');
 
-	Log.normal('finished writing new save file');
-})();
+const savePath = path.join(
+	path.dirname(args.saveFilePath),
+	`${path.basename(args.saveFilePath, '.json')}.reupload.json`
+);
+
+fs.writeFileSync(savePath, saveFileContent);
+
+Log.normal('finished writing new save file');
