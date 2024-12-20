@@ -16,8 +16,8 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 
 	const taskArrActive: UrlDownloadTask[] = [];
 
-	Log.normal(`queue size: ${taskArr.length}`);
-	Log.normal(`simultaneous downloads: ${args.simultaneous}`);
+	Log.normal(true, `queue size: ${taskArr.length}`);
+	Log.normal(true, `simultaneous downloads: ${args.simultaneous}`);
 
 	await Promise.all(
 		Array(args.simultaneous)
@@ -31,6 +31,7 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 					printQueue(taskArrActive);
 
 					Log.withUrl(
+						false,
 						promiseInfo.url,
 						promiseInfo.urlIndex,
 						'queued url download'
@@ -39,6 +40,7 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 					await promiseInfo.func();
 
 					Log.withUrl(
+						false,
 						promiseInfo.url,
 						promiseInfo.urlIndex,
 						'processed URL'
@@ -56,17 +58,18 @@ function printQueue(promiseInfoArrActive: UrlDownloadTask[]) {
 	const numTasks = promiseInfoArrActive.length;
 
 	if (numTasks > 0) {
-		Log.spaced(`active tasks (${numTasks}):`);
+		Log.spaced(false, `active tasks (${numTasks}):`);
 
 		promiseInfoArrActive.forEach((promiseInfo) => {
 			const sPassed = ((now - promiseInfo.started) / 1000).toFixed();
 			Log.withUrl(
+				false,
 				promiseInfo.url,
 				promiseInfo.urlIndex,
 				`(${sPassed} seconds ago)`
 			);
 		});
 	} else {
-		Log.normal('no tasks left');
+		Log.normal(true, 'no tasks left');
 	}
 }

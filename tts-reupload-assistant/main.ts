@@ -1,20 +1,20 @@
-import * as Cache from './enumerateCachedFiles.ts';
-import * as Log from './logger.ts';
-import downloadFile from './downloadFile.ts';
-import extractUrls from './extractUrls.ts';
+import * as Cache from './src/enumerateCachedFiles.ts';
+import * as Log from './src/logger.ts';
+import downloadFile from './src/downloadFile.ts';
+import extractUrls from './src/extractUrls.ts';
 import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
-import parseArgs from './parseArgs.ts';
+import parseArgs from './src/parseArgs.ts';
 import path from 'node:path';
-import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue.ts';
+import { runDownloadTasks, UrlDownloadTask } from './src/runDownloadQueue.ts';
 
 const args = parseArgs();
 
 let saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
 const urls = extractUrls(saveFileContent);
-Log.spaced(`URLs detected: ${urls.length}`);
+Log.spaced(false, `URLs detected: ${urls.length}`);
 urls.forEach((url, id) => {
-	Log.withUrl(url, id);
+	Log.withUrl(false, url, id);
 });
 
 const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
@@ -23,7 +23,7 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 	url,
 	urlIndex
 ): UrlDownloadTask {
-	Log.withUrl(url, urlIndex, 'queued for processing');
+	Log.withUrl(false, url, urlIndex, 'queued for processing');
 
 	return {
 		url: url,
@@ -45,7 +45,7 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 			);
 
 			if (exists) {
-				Log.withUrl(url, urlIndex, 'file exists');
+				Log.withUrl(false, url, urlIndex, 'file exists');
 			}
 
 			const cachedInstance = Cache.getCachedInstance(cachedFiles, url);
@@ -60,7 +60,7 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 					await fsPromises.symlink(cachedInstance.fullPath, filePath);
 				}
 
-				Log.withUrl(url, urlIndex, 'picked cache file');
+				Log.withUrl(false, url, urlIndex, 'picked cache file');
 				return;
 			}
 
@@ -69,12 +69,12 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 	};
 });
 
-Log.spaced('initating the download queue...');
+Log.spaced(false, 'initating the download queue...');
 
 await runDownloadTasks(downloadTasks, args);
 
-Log.normal('end of the download queue');
-Log.normal('editing save file...');
+Log.normal(true, 'end of the download queue');
+Log.normal(true, 'editing save file...');
 
 urls.forEach(function (url, urlIndex) {
 	const filePath = path.join(args.tmpPath, String(urlIndex));
@@ -88,8 +88,8 @@ urls.forEach(function (url, urlIndex) {
 	);
 });
 
-Log.normal('finished editing save file');
-Log.normal('writing new save file...');
+Log.normal(true, 'finished editing save file');
+Log.normal(true, 'writing new save file...');
 
 const savePath = path.join(
 	path.dirname(args.saveFilePath),
@@ -98,4 +98,4 @@ const savePath = path.join(
 
 fs.writeFileSync(savePath, saveFileContent);
 
-Log.normal('finished writing new save file');
+Log.normal(true, 'finished writing new save file');

@@ -23,9 +23,10 @@ export interface Args {
 	noLinks: boolean;
 }
 
-export default function parseArgs(): Args {
-	const opts = docopt(
-		`TTS reupload helper
+function getArgsRaw(): ArgsRaw {
+	try {
+		return docopt(
+			`TTS reupload helper
 Usage:
     reup.js <tts-save-file> <tts-cache-folder> <temp-folder> [options]
 
@@ -44,7 +45,7 @@ Options:
     --no-links
         By default soft links are created for existing cached files.
         Use this option to force copying instead.
-    --timeout=T  [default: 3000]
+    --timeout=T  [default: 10000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
     --simultaneous=N [default: 5]
@@ -52,8 +53,17 @@ Options:
 
 Output:
     Will be placed next to the original file with ".reupload"
-    added to the name.`
-	) as unknown as ArgsRaw;
+    added to the name.
+`
+		) as unknown as ArgsRaw;
+	} catch (err: any) {
+		console.log(err.message);
+		Deno.exit();
+	}
+}
+
+export default function parseArgs(): Args {
+	const opts = getArgsRaw();
 
 	return {
 		saveFilePath: opts['<tts-save-file>'],
