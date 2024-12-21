@@ -1,5 +1,13 @@
 {
   "version": "4",
+  "specifiers": {
+    "npm:docopt@~0.6.2": "0.6.2"
+  },
+  "npm": {
+    "docopt@0.6.2": {
+      "integrity": "sha512-NqTbaYeE4gA/wU1hdKFdU+AFahpDOpgGLzHP42k6H6DKExJd0A55KEVWYhL9FEmHmgeLvEU2vuKXDuU+4yToOw=="
+    }
+  },
   "remote": {
     "https://deno.land/x/docopt@v1.0.7/mod.ts": "e3268e295d402259afaebfca30b300788ef4a40a6b3dc442619374689bb9e444",
     "https://deno.land/x/docopt@v1.0.7/src/docopt.ts": "8c760730201453e3ed24937ddf8751868177cc5dec89472aef90b675d6b40efe",

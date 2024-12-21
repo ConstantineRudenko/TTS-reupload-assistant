@@ -33,6 +33,14 @@ async function downloadRemoteFile(filePath: string, url: string, args: Args) {
 	await fsPromises.writeFile(filePath, text, 'utf-8');
 }
 
+async function realPath(p: string) {
+	const stats = await Deno.lstat(p);
+	if (stats.isSymlink) {
+		return Deno.readLink(p);
+	}
+	return p;
+}
+
 export default async function downloadFile(
 	filePath: string,
 	url: string,
@@ -42,16 +50,19 @@ export default async function downloadFile(
 	Log.withUrl(false, url, urlIndex, 'started downloading');
 
 	switch (true) {
-		case url.slice(0, 8) == 'file:///':
+		case url.slice(0, 8) == 'file:///': {
+			const filepath = await realPath(url.slice(8).replaceAll('/', '\\'));
+
 			if (args.noLinks) {
-				await fsPromises.copyFile(url.slice(8), filePath);
+				await fsPromises.copyFile(filepath, filePath);
 			} else {
-				await fsPromises.symlink(url.slice(8), filePath);
+				await fsPromises.symlink(filepath, filePath);
 			}
 
 			Log.withUrl(false, url, urlIndex, 'picked local file');
 
 			return;
+		}
 		default:
 			try {
 				await downloadRemoteFile(filePath, url, args);
