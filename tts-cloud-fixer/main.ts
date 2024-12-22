@@ -1,6 +1,12 @@
 import * as bson from 'npm:bson';
 import * as path from 'jsr:@std/path';
 
+const FNames = {
+	CloudInfo: 'CloudInfo.bson',
+	CloudFolder: 'CloudFolder.bson',
+};
+const allFNames = Object.values(FNames);
+
 function loadBson<T>(pathBson: string) {
 	const data = Deno.readFileSync(pathBson);
 	return bson.deserialize(data) as T;
@@ -20,12 +26,12 @@ type CloudInfo = Record<
 type CloudFolder = Record<string, string>;
 
 function getCloudFiles(pathCloud: string) {
-	const pathCloudInfo = path.join(pathCloud, 'CloudInfo.bson');
+	const pathCloudInfo = path.join(pathCloud, FNames.CloudInfo);
 	return loadBson<CloudInfo>(pathCloudInfo);
 }
 
 function getCloudFolders(pathCloud: string) {
-	const pathCloudFolder = path.join(pathCloud, 'CloudFolder.bson');
+	const pathCloudFolder = path.join(pathCloud, FNames.CloudFolder);
 	return Object.values(loadBson<CloudFolder>(pathCloudFolder));
 }
 
@@ -49,12 +55,56 @@ function getGhostRecordKeys(pathCloud: string): string[] {
 		.map(([fname, _]) => fname);
 }
 
-function getCleanedFileRecords(pathCloud: string) {
+function getCleanedCloudFiles(pathCloud: string): CloudInfo {
 	const { cloudFiles } = getCloudInfo(pathCloud);
 	const ghostRecordKeys = getGhostRecordKeys(pathCloud);
 	return Object.fromEntries(
-		Object.entries(cloudFiles).filter(([fname, _]) =>
-			ghostRecordKeys.includes(fname)
+		Object.entries(cloudFiles).filter(
+			([fname, _]) => !ghostRecordKeys.includes(fname)
+		)
+	);
+}
+
+function getActiveFiles(pathCloud: string): string[] {
+	const { cloudFiles } = getCloudInfo(pathCloud);
+	return Object.entries(cloudFiles).map(([fname, _]) => fname);
+}
+
+function getOrphanFiles(pathCloud: string) {
+	const existingFiles = Array.from(Deno.readDirSync(pathCloud))
+		.filter(
+			(dirEntry) => dirEntry.isFile && !allFNames.includes(dirEntry.name)
+		)
+		.map((dirEntry) => dirEntry.name);
+	const filesActive = getActiveFiles(pathCloud);
+	return existingFiles.filter((fname) => !filesActive.includes(fname));
+}
+
+// delete remotecache.vdf, steam offline
+async function corruptOrphanFiles(pathCloud: string) {
+	const orphanFiles = getOrphanFiles(pathCloud);
+	await Promise.all(
+		orphanFiles.map((file) =>
+			(async () => {
+				const orphanPath = path.join(pathCloud, file);
+				await Deno.writeTextFile(orphanPath, 'w');
+			})()
+		)
+	);
+	await Deno.remove(
+		path.normalize(path.join(pathCloud, '../remotecache.vdf'))
+	);
+}
+
+// during conflict dialog
+async function removeOrphanFiles(pathCloud: string) {
+	const orphanFiles = getOrphanFiles(pathCloud);
+	await Promise.all(
+		orphanFiles.map((file) =>
+			(async () => {
+				const orphanPath = path.join(pathCloud, file);
+				await Deno.remove(orphanPath);
+			})()
 		)
 	);
 }
@@ -120,6 +170,5 @@ export default async function fixCloudFolders(pathCloud: string) {
 	// );
 }
 
-console.log(
-	getCleanedFileRecords('E:/Games/Steam/userdata/391694214/286160/remote/')
-);
+console.log(getActiveFiles('E:/Games/Steam/userdata/391694214/286160/remote/'));
+// await removeOrphanFiles('E:/Games/Steam/userdata/391694214/286160/remote/');
