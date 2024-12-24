@@ -18,11 +18,13 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 	Log.normal(true, `queue size: ${taskArr.length}`);
 	Log.normal(true, `simultaneous downloads: ${args.simultaneous}`);
 
-	await Promise.all(
-		Array.from({ length: args.simultaneous }).map(
-			async () => await worker(taskArr, args.maxAttempts)
-		)
-	);
+	while (taskArr.length > 0) {
+		await Promise.all(
+			Array.from({ length: args.simultaneous }).map(
+				async () => await worker(taskArr, args.maxAttempts)
+			)
+		);
+	}
 }
 
 async function worker(taskArr: UrlDownloadTask[], maxAttempts: number) {
@@ -35,14 +37,6 @@ async function worker(taskArr: UrlDownloadTask[], maxAttempts: number) {
 		if (result.ok) {
 			continue;
 		}
-
-		// log retry
-		Log.withUrl(
-			true,
-			urlDownloadTask.url,
-			urlDownloadTask.urlIndex,
-			`Retry. [${result.status}] ${result.statusText} (timeout: ${result.retryAfter})`
-		);
 
 		// hard fail or exceeded max attempts
 		if (
@@ -61,6 +55,14 @@ async function worker(taskArr: UrlDownloadTask[], maxAttempts: number) {
 			continue;
 		}
 
+		// log retry
+		Log.withUrl(
+			true,
+			urlDownloadTask.url,
+			urlDownloadTask.urlIndex,
+			`Retry. [${result.status}] ${result.statusText} (timeout: ${result.retryAfter})`
+		);
+
 		// restart after delay
 		await Promise.all([
 			// keep the worker spinning
@@ -72,7 +74,7 @@ async function worker(taskArr: UrlDownloadTask[], maxAttempts: number) {
 				);
 
 				urlDownloadTask.attempts++;
-				taskArr.push(urlDownloadTask);
+				taskArr.push(urlDownloadTask); // spawn retry task
 
 				return;
 			},
