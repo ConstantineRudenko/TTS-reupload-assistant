@@ -19,7 +19,18 @@ function normalizeUrl(url: string): string {
 	return `http://${url}`;
 }
 
-async function downloadRemoteFile(filePath: string, url: string, args: Args) {
+export interface DownloadResut {
+	ok: boolean;
+	status: number;
+	statusText: string;
+	retryAfter: number;
+}
+
+async function downloadRemoteFile(
+	filePath: string,
+	url: string,
+	args: Args
+): Promise<DownloadResut> {
 	const abort = new AbortController();
 	setTimeout(() => {
 		abort.abort();
@@ -63,10 +74,17 @@ function getRetryTime(response: Response) {
 		return [408, 429].indexOf(response.status) == -1 ? 0 : defaultRetryTime;
 	}
 	const retryTime = Number(headerValue);
+
 	if (isNaN(retryTime) || retryTime < 0) {
 		throw new Error(`Server returned invalid retry time: ${retryTime}`);
 	}
-	return retryTime;
+
+	// server returned 0
+	if (retryTime == 0) {
+		return defaultRetryTime;
+	}
+
+	return retryTime * 1000;
 }
 
 async function realPath(p: string) {
@@ -82,7 +100,7 @@ export default async function downloadFile(
 	url: string,
 	urlIndex: number,
 	args: Args
-) {
+): Promise<DownloadResut> {
 	Log.withUrl(false, url, urlIndex, 'started downloading');
 
 	switch (true) {
@@ -97,7 +115,12 @@ export default async function downloadFile(
 
 			Log.withUrl(false, url, urlIndex, 'picked local file');
 
-			return;
+			return {
+				ok: true,
+				retryAfter: 0,
+				status: 0,
+				statusText: '',
+			};
 		}
 		default: {
 			const result = await downloadRemoteFileWithRetry(
@@ -116,7 +139,7 @@ export default async function downloadFile(
 					`Download error. [${result.status}] ${result.statusText}`
 				);
 			}
-			return;
+			return result;
 		}
 	}
 }
@@ -130,7 +153,7 @@ async function downloadRemoteFileWithRetry(
 		try {
 			const result = await downloadRemoteFile(filePath, url, args);
 			// maximum number of retries
-			if (i == args.retries) {
+			if (i >= args.maxAttempts) {
 				return result;
 			}
 
@@ -147,8 +170,6 @@ async function downloadRemoteFileWithRetry(
 			) {
 				return result;
 			}
-
-			Log.withUrl(true, url, -1, `retry-after: ${result.retryAfter}`);
 		} finally {
 			// failed, but can try again
 		}

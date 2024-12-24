@@ -1,12 +1,13 @@
 import * as Cache from './src/enumerateCachedFiles.ts';
 import * as Log from './src/logger.ts';
-import downloadFile from './src/downloadFile.ts';
+import downloadFile, { DownloadResut } from './src/downloadFile.ts';
 import extractUrls from './src/extractUrls.ts';
 import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import parseArgs from './src/parseArgs.ts';
 import path from 'node:path';
 import { runDownloadTasks, UrlDownloadTask } from './src/runDownloadQueue.ts';
+import { exists } from 'https://deno.land/std@0.224.0/fs/mod.ts';
 
 const args = parseArgs();
 
@@ -28,24 +29,12 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 	return {
 		url: url,
 		urlIndex: urlIndex,
-		started: NaN,
-		func: async function () {
+		attempts: 0,
+		func: async function (): Promise<DownloadResut> {
 			const filePath = path.join(args.tmpPath, String(urlIndex));
 
-			const exists = await new Promise(
-				(resolve) =>
-					void fsPromises
-						.access(filePath, fs.constants.F_OK)
-						.then(() => {
-							resolve(true);
-						})
-						.catch(() => {
-							resolve(false);
-						})
-			);
-
-			if (exists) {
-				Log.withUrl(false, url, urlIndex, 'file exists');
+			if (await exists(filePath)) {
+				//
 			}
 
 			const cachedInstance = Cache.getCachedInstance(cachedFiles, url);
@@ -60,11 +49,15 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 					await fsPromises.symlink(cachedInstance.fullPath, filePath);
 				}
 
-				Log.withUrl(false, url, urlIndex, 'picked cache file');
-				return;
+				return {
+					ok: true,
+					status: 0,
+					statusText: '',
+					retryAfter: 0,
+				};
 			}
 
-			await downloadFile(filePath, url, urlIndex, args);
+			return await downloadFile(filePath, url, urlIndex, args);
 		},
 	};
 });

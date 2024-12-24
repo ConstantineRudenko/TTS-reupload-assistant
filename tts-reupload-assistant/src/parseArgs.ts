@@ -8,7 +8,7 @@ interface ArgsRaw {
 
 	'--timeout': string;
 	'--simultaneous': string;
-	'--retries': string;
+	'--max-attempts': string;
 
 	'--no-links': string;
 }
@@ -20,7 +20,7 @@ export interface Args {
 
 	timeout: number;
 	simultaneous: number;
-	retries: number;
+	maxAttempts: number;
 
 	noLinks: boolean;
 }
@@ -50,7 +50,7 @@ Options:
     --timeout=T  [default: 10000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
-	--retries=N [default:5]
+	--max-attempts=N [default:5]
 		How many times to retry a failed download before giving up.
     --simultaneous=N [default: 5]
         How many files should be downloaded simultaneously.
@@ -60,8 +60,9 @@ Output:
     added to the name.
 `
 		) as unknown as ArgsRaw;
-	} catch (err: any) {
-		console.log(err.message);
+	} catch (err: unknown) {
+		const error = err as Partial<Error>;
+		console.log(error.message);
 		Deno.exit();
 	}
 }
@@ -75,18 +76,18 @@ export default function parseArgs(): Args {
 		cacheFolder: opts['<tts-cache-folder>'],
 		noLinks: Boolean(opts['--no-links']),
 		timeout: parseTimeout(opts['--timeout'] ?? 0),
-		retries: parseRetries(opts['--retries'] ?? 5),
+		maxAttempts: parseRetries(opts['--max-attempts'] ?? 5),
 		simultaneous: parseSimultaneous(opts['--simultaneous'] ?? '5'),
 	};
 }
 
 function parseRetries(retriesStr: string) {
-	const retries = Number(retriesStr);
-	if (isNaN(retries) || retries < 0) {
-		console.log(`Invalid number of retries: ${retries}`);
+	const maxAttempts = Number(retriesStr);
+	if (isNaN(maxAttempts) || maxAttempts < 0) {
+		console.log(`Invalid number of maxAttempts: ${maxAttempts}`);
 		process.exit();
 	}
-	return retries;
+	return maxAttempts;
 }
 
 function parseSimultaneous(sSimultaneous: string): number {

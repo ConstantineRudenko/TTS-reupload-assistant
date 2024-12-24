@@ -2,74 +2,80 @@ import 'MadCakeUtil-ts';
 import 'MadCakeUtil-ts-augmentations';
 import * as Log from './logger.ts';
 import { Args } from './parseArgs.ts';
+import { DownloadResut } from './downloadFile.ts';
 
 export interface UrlDownloadTask {
-	func: () => Promise<unknown>;
+	func: () => Promise<DownloadResut>;
 	url: string;
 	urlIndex: number;
-	started: number;
+	attempts: number;
 }
 
 export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 	taskArr = taskArr.slice(); // local copy
 	taskArr.reverse();
 
-	const taskArrActive: UrlDownloadTask[] = [];
-
 	Log.normal(true, `queue size: ${taskArr.length}`);
 	Log.normal(true, `simultaneous downloads: ${args.simultaneous}`);
 
 	await Promise.all(
-		Array(args.simultaneous)
-			.fill(0)
-			.map(async () => {
-				while (taskArr.length > 0) {
-					const promiseInfo: UrlDownloadTask = taskArr.pop()!;
-					taskArrActive.push(promiseInfo);
-					promiseInfo.started = Date.now();
-
-					printQueue(taskArrActive);
-
-					Log.withUrl(
-						false,
-						promiseInfo.url,
-						promiseInfo.urlIndex,
-						'queued url download'
-					);
-
-					await promiseInfo.func();
-
-					Log.withUrl(
-						false,
-						promiseInfo.url,
-						promiseInfo.urlIndex,
-						'processed URL'
-					);
-
-					taskArrActive.remove(promiseInfo);
-				}
-			})
+		Array.from({ length: args.simultaneous }).map(
+			async () => await worker(taskArr, args.maxAttempts)
+		)
 	);
 }
 
-function printQueue(promiseInfoArrActive: UrlDownloadTask[]) {
-	const now = Date.now();
+async function worker(taskArr: UrlDownloadTask[], maxAttempts: number) {
+	while (taskArr.length > 0) {
+		const urlDownloadTask: UrlDownloadTask = taskArr.pop()!;
 
-	const numTasks = promiseInfoArrActive.length;
+		const result = await urlDownloadTask.func();
 
-	if (numTasks > 0) {
-		Log.spaced(false, `active tasks (${numTasks}):`);
+		// success
+		if (result.ok) {
+			continue;
+		}
 
-		promiseInfoArrActive.forEach((promiseInfo) => {
-			const sPassed = ((now - promiseInfo.started) / 1000).toFixed();
+		// log retry
+		Log.withUrl(
+			true,
+			urlDownloadTask.url,
+			urlDownloadTask.urlIndex,
+			`Retry. [${result.status}] ${result.statusText} (timeout: ${result.retryAfter})`
+		);
+
+		// hard fail or exceeded max attempts
+		if (
+			urlDownloadTask.attempts == maxAttempts ||
+			[400, 401, 402, 403, 404, 405, 406, 407, 410].indexOf(
+				result.status
+			) != -1
+		) {
 			Log.withUrl(
-				false,
-				promiseInfo.url,
-				promiseInfo.urlIndex,
-				`(${sPassed} seconds ago)`
+				true,
+				urlDownloadTask.url,
+				urlDownloadTask.urlIndex,
+				`Download error. [${result.status}] ${result.statusText}`
 			);
-		});
-	} else {
-		Log.normal(true, 'no tasks left');
+
+			continue;
+		}
+
+		// restart after delay
+		await Promise.all([
+			// keep the worker spinning
+			async () => await worker(taskArr, maxAttempts),
+			// fork worker into retry scheduler
+			async () => {
+				await new Promise((resolve) =>
+					setTimeout(resolve, result.retryAfter)
+				);
+
+				urlDownloadTask.attempts++;
+				taskArr.push(urlDownloadTask);
+
+				return;
+			},
+		]);
 	}
 }
