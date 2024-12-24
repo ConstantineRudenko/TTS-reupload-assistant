@@ -8,6 +8,7 @@ interface ArgsRaw {
 
 	'--timeout': string;
 	'--simultaneous': string;
+	'--retries': string;
 
 	'--no-links': string;
 }
@@ -19,6 +20,7 @@ export interface Args {
 
 	timeout: number;
 	simultaneous: number;
+	retries: number;
 
 	noLinks: boolean;
 }
@@ -48,6 +50,8 @@ Options:
     --timeout=T  [default: 10000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
+	--retries=N [default:5]
+		How many times to retry a failed download before giving up.
     --simultaneous=N [default: 5]
         How many files should be downloaded simultaneously.
 
@@ -70,30 +74,37 @@ export default function parseArgs(): Args {
 		tmpPath: opts['<temp-folder>'],
 		cacheFolder: opts['<tts-cache-folder>'],
 		noLinks: Boolean(opts['--no-links']),
-		timeout: parseTimeout(opts['--timeout']),
+		timeout: parseTimeout(opts['--timeout'] ?? 0),
+		retries: parseRetries(opts['--retries'] ?? 5),
 		simultaneous: parseSimultaneous(opts['--simultaneous'] ?? '5'),
 	};
 }
 
+function parseRetries(retriesStr: string) {
+	const retries = Number(retriesStr);
+	if (isNaN(retries) || retries < 0) {
+		console.log(`Invalid number of retries: ${retries}`);
+		process.exit();
+	}
+	return retries;
+}
+
 function parseSimultaneous(sSimultaneous: string): number {
 	const simultaneous = Number(sSimultaneous);
-	switch (true) {
-		case isNaN(simultaneous):
-		case simultaneous <= 0:
-			console.log('Invalid number of simultaneous downloads.');
-			console.log(sSimultaneous);
-			process.exit();
+	if (isNaN(simultaneous) || simultaneous <= 0) {
+		console.log(
+			`Invalid number of simultaneous downloads: ${sSimultaneous}`
+		);
+		process.exit();
 	}
 	return simultaneous;
 }
 
 function parseTimeout(sTimeout: string): number {
 	const timeout = Number(sTimeout);
-	switch (true) {
-		case isNaN(timeout):
-		case timeout <= 0:
-			console.log('Invalid timeout provided');
-			process.exit();
+	if (isNaN(timeout) || timeout <= 0) {
+		console.log('Invalid timeout provided');
+		process.exit();
 	}
 	return timeout;
 }
