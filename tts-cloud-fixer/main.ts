@@ -143,31 +143,6 @@ export default async function fixCloudFolders(pathCloud: string) {
 		)
 	);
 	console.log(fileOrphans);
-
-	// const folders = new Set(
-	// 	Object.entries(cloudInfo).map(([_, value]) => value.Folder)
-	// );
-	// const foldersWithSubfolders = new Set(
-	// 	Array.from(folders).flatMap((folder) => {
-	// 		const parts = folder.split('\\');
-	// 		return parts.map((_, index, parts) =>
-	// 			parts.slice(0, index + 1).join('\\')
-	// 		);
-	// 	})
-	// );
-	// const cloudFolder = Object.fromEntries(
-	// 	Array.from(foldersWithSubfolders)
-	// 		.sort()
-	// 		.filter((folder) => folder != '')
-	// 		.map((value, index) => [String(index), value])
-	// );
-
-	// const cloudFolderBson = bson.serialize(cloudFolder, {});
-	// Deno.writeFile(pathCloudFolder, cloudFolderBson);
-
-	// console.log(
-	// 	JSON.stringify(loadBson<CloudFolder>(pathCloudFolder), null, 2)
-	// );
 }
 
 console.log(getActiveFiles('E:/Games/Steam/userdata/391694214/286160/remote/'));
