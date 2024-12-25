@@ -30,6 +30,7 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 		url: url,
 		urlIndex: urlIndex,
 		attempts: 0,
+		runAfterTimestamp: 0,
 		func: async function (): Promise<DownloadResut> {
 			const filePath = path.join(args.tmpPath, String(urlIndex));
 

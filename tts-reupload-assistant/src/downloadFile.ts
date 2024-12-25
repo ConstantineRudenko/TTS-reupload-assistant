@@ -2,7 +2,9 @@ import * as Log from './logger.ts';
 import { Args } from './parseArgs.ts';
 import fsPromises from 'node:fs/promises';
 
-const defaultRetryTime = 10000;
+function defaultRetryTime() {
+	return new Date().getTime() + 10000;
+}
 
 function normalizeUrl(url: string): string {
 	// If the URL starts with "http" or "https", it's already complete
@@ -56,22 +58,24 @@ async function downloadRemoteFile(
 				ok: false,
 				status: -1,
 				statusText: 'Timed out without server response.',
-				retryAfter: defaultRetryTime,
+				retryAfter: defaultRetryTime(),
 			};
 		}
 		return {
 			ok: false,
 			status: -2,
 			statusText: 'Unknown error.',
-			retryAfter: defaultRetryTime,
+			retryAfter: defaultRetryTime(),
 		};
 	}
 }
 
-function getRetryTime(response: Response) {
+function getRetryTime(response: Response): number {
 	const headerValue = response.headers.get('Retry-After');
 	if (headerValue == null) {
-		return [408, 429].indexOf(response.status) == -1 ? 0 : defaultRetryTime;
+		return [408, 429].indexOf(response.status) == -1
+			? new Date().getTime()
+			: defaultRetryTime();
 	}
 	const retryTime = Number(headerValue);
 
@@ -81,10 +85,10 @@ function getRetryTime(response: Response) {
 
 	// server returned 0
 	if (retryTime == 0) {
-		return defaultRetryTime;
+		return defaultRetryTime();
 	}
 
-	return retryTime * 1000;
+	return new Date().getTime() + retryTime * 1000;
 }
 
 async function realPath(p: string) {
