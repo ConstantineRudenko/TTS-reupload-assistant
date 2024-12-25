@@ -81,14 +81,6 @@ async function worker(
 			continue;
 		}
 
-		// log retry
-		Log.withUrl(
-			true,
-			urlDownloadTask.url,
-			urlDownloadTask.urlIndex,
-			`Retry. [${result.status}] ${result.statusText} (timeout: ${result.retryAfter})`
-		);
-
 		// restart after delay
 		urlDownloadTask.attempts++;
 		taskQueue.enqueue(urlDownloadTask);

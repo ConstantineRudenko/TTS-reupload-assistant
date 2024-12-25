@@ -17,6 +17,11 @@ export class PriorityQueue<T> {
 	}
 
 	enqueue(item: T): number {
+		if (this.isEmpty) {
+			this.items.push(item);
+			return 0;
+		}
+
 		let left = 0;
 		let right = this.items.length;
 		while (true) {
