@@ -15,5 +15,5 @@ export default function extractUrls(saveFileContent: string): string[] {
 				return [];
 			}).flat()
 		)
-	).filter((x) => x.slice(0, 16) == 'http://paste.ee/');
+	);
 }
