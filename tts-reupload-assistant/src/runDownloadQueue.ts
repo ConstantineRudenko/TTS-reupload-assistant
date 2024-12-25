@@ -4,6 +4,7 @@ import * as Log from './logger.ts';
 import { Args } from './parseArgs.ts';
 import { DownloadResut } from './downloadFile.ts';
 import { PriorityQueue } from './PriorityQueue.ts';
+import urlToFname from './urlToCachedFname.ts';
 
 export interface UrlDownloadTask {
 	func: () => Promise<DownloadResut>;
@@ -83,6 +84,8 @@ async function worker(
 
 		// restart after delay
 		urlDownloadTask.attempts++;
+		urlDownloadTask.runAfterTimestamp = result.retryAfter;
+		urlDownloadTask.runAfterTimestamp = new Date().getTime() + 10000;
 		taskQueue.enqueue(urlDownloadTask);
 	}
 }

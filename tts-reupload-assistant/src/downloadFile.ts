@@ -133,16 +133,6 @@ export default async function downloadFile(
 				args
 			);
 
-			if (result.ok) {
-				Log.withUrl(false, url, urlIndex, 'downloaded file');
-			} else {
-				Log.withUrl(
-					true,
-					url,
-					urlIndex,
-					`Download error. [${result.status}] ${result.statusText}`
-				);
-			}
 			return result;
 		}
 	}
