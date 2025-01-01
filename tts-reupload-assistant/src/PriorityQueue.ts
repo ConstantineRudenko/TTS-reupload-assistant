@@ -40,7 +40,9 @@ export class PriorityQueue<T> {
 		}
 	}
 
-	dequeue() {
-		return this.items.shift();
+	dequeue(): T;
+	dequeue(index: number): T;
+	dequeue(index?: number) {
+		return this.items.splice(index ?? 0, 1)[0];
 	}
 }

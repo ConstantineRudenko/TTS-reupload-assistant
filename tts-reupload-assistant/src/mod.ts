@@ -1,13 +1,14 @@
-import * as Cache from './src/enumerateCachedFiles.ts';
-import * as Log from './src/logger.ts';
-import downloadFile, { DownloadResut } from './src/downloadFile.ts';
-import extractUrls from './src/extractUrls.ts';
+import * as Cache from './enumerateCachedFiles.ts';
+import * as Log from './logger.ts';
+import downloadFile, { DownloadResut } from './downloadFile.ts';
+import extractUrls from './extractUrls.ts';
 import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
-import parseArgs from './src/parseArgs.ts';
+import parseArgs from './parseArgs.ts';
 import path from 'node:path';
-import { runDownloadTasks, UrlDownloadTask } from './src/runDownloadQueue.ts';
+import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue.ts';
 import { exists } from 'https://deno.land/std@0.224.0/fs/mod.ts';
+import { DownloadSchedule } from './downloadSchedule.ts';
 
 const args = parseArgs();
 
@@ -30,7 +31,7 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 		url: url,
 		urlIndex: urlIndex,
 		attempts: 0,
-		runAfterTimestamp: 0,
+		schedule: new DownloadSchedule(),
 		func: async function (): Promise<DownloadResut> {
 			const filePath = path.join(args.tmpPath, String(urlIndex));
 
@@ -54,7 +55,7 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 					ok: true,
 					status: 0,
 					statusText: '',
-					retryAfter: 0,
+					retryAfterTime: 0,
 				};
 			}
 

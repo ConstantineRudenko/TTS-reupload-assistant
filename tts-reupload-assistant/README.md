@@ -2,6 +2,16 @@
 
 Reroutes all URLs in a save file (images, meshes, asset bundles, etc.) to local copies for a complete re-upload. Downloads URLs that have not been cached.
 
+## Self-signed certificates
+
+Deno will refuse to download files from a server with self-signed certificate by default. To support such servers, use the option `--unsafely-ignore-certificate-errors` as follows.
+
+```
+deno run --unsafely-ignore-certificate-errors src/mod.js
+```
+
+## Usage
+
 ```
 Usage:
     reup.js <tts-save-file> <tts-cache-folder> <temp-folder> [options]
@@ -21,13 +31,15 @@ Options:
     --no-links
         By default soft links are created for existing cached files.
         Use this option to force copying instead.
-    --timeout=T  [default: 3000]
+    --timeout=T  [default: 10000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
+	--max-attempts=N [default:5]
+		How many times to retry a failed download before giving up.
     --simultaneous=N [default: 5]
         How many files should be downloaded simultaneously.
 
 Output:
-    Will be placed next to the original file with ".edited"
+    Will be placed next to the original file with ".reupload"
     added to the name.
 ```

@@ -4,30 +4,26 @@ import * as Log from './logger.ts';
 import { Args } from './parseArgs.ts';
 import { DownloadResut } from './downloadFile.ts';
 import { PriorityQueue } from './PriorityQueue.ts';
-import urlToFname from './urlToCachedFname.ts';
+import _urlToFname from './urlToCachedFname.ts'; // unused, but keep in case might want to use
+import { DownloadSchedule } from './downloadSchedule.ts';
+
+const extraTimeout = 500;
 
 export interface UrlDownloadTask {
 	func: () => Promise<DownloadResut>;
 	url: string;
 	urlIndex: number;
 	attempts: number;
-	runAfterTimestamp: number;
+	schedule: DownloadSchedule;
 }
 
 export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 	taskArr = taskArr.slice(); // local copy
 	taskArr.reverse();
 
-	const taskQueue = new PriorityQueue<UrlDownloadTask>((a, b) => {
-		switch (true) {
-			case a.runAfterTimestamp == b.runAfterTimestamp:
-				return 0;
-			case a.runAfterTimestamp < b.runAfterTimestamp:
-				return -1;
-			default:
-				return 1;
-		}
-	});
+	const taskQueue = new PriorityQueue<UrlDownloadTask>((a, b) =>
+		a.schedule.compare(b.schedule)
+	);
 	for (const task of taskArr) {
 		taskQueue.enqueue(task);
 	}
@@ -53,9 +49,10 @@ async function worker(
 	while (!taskQueue.isEmpty) {
 		const urlDownloadTask: UrlDownloadTask = taskQueue.dequeue()!;
 
-		const delay = urlDownloadTask.runAfterTimestamp - new Date().getTime();
-		if (delay > 0) {
-			await sleep(delay);
+		const runAfterTime = urlDownloadTask.schedule.runAfterTime;
+		if (runAfterTime != null) {
+			const delay = runAfterTime - new Date().getTime();
+			await sleep(delay + extraTimeout);
 		}
 
 		const result = await urlDownloadTask.func();
@@ -66,11 +63,12 @@ async function worker(
 		}
 
 		// hard fail or exceeded max attempts
+		const hardFailCodes: (typeof result.status)[] = [
+			400, 401, 402, 403, 404, 405, 406, 407, 410,
+		];
 		if (
 			urlDownloadTask.attempts == maxAttempts ||
-			[400, 401, 402, 403, 404, 405, 406, 407, 410].indexOf(
-				result.status
-			) != -1
+			hardFailCodes.indexOf(result.status) != -1
 		) {
 			Log.withUrl(
 				true,
@@ -82,10 +80,18 @@ async function worker(
 			continue;
 		}
 
+		if (result.status == 'unknown error') {
+			Log.withUrl(
+				true,
+				urlDownloadTask.url,
+				urlDownloadTask.urlIndex,
+				`Download error. ${result.statusText}`
+			);
+		}
+
 		// restart after delay
 		urlDownloadTask.attempts++;
-		urlDownloadTask.runAfterTimestamp = result.retryAfter;
-		urlDownloadTask.runAfterTimestamp = new Date().getTime() + 10000;
+		urlDownloadTask.schedule = new DownloadSchedule(result.retryAfterTime);
 		taskQueue.enqueue(urlDownloadTask);
 	}
 }

@@ -23,9 +23,9 @@ function normalizeUrl(url: string): string {
 
 export interface DownloadResut {
 	ok: boolean;
-	status: number;
+	status: number | 'abort' | 'unknown error';
 	statusText: string;
-	retryAfter: number;
+	retryAfterTime: number;
 }
 
 async function downloadRemoteFile(
@@ -49,23 +49,23 @@ async function downloadRemoteFile(
 			ok: response.ok,
 			status: response.status,
 			statusText: response.statusText,
-			retryAfter: getRetryTime(response),
+			retryAfterTime: getRetryTime(response),
 		};
 	} catch (err: unknown) {
 		const error = err as Partial<Error>;
 		if (error.name == 'AbortError') {
 			return {
 				ok: false,
-				status: -1,
+				status: 'abort',
 				statusText: 'Timed out without server response.',
-				retryAfter: defaultRetryTime(),
+				retryAfterTime: defaultRetryTime(),
 			};
 		}
 		return {
 			ok: false,
-			status: -2,
-			statusText: 'Unknown error.',
-			retryAfter: defaultRetryTime(),
+			status: 'unknown error',
+			statusText: `[Unknown error: ${error.name}] ${error.message}`,
+			retryAfterTime: defaultRetryTime(),
 		};
 	}
 }
@@ -121,51 +121,15 @@ export default async function downloadFile(
 
 			return {
 				ok: true,
-				retryAfter: 0,
+				retryAfterTime: 0,
 				status: 0,
 				statusText: '',
 			};
 		}
 		default: {
-			const result = await downloadRemoteFileWithRetry(
-				filePath,
-				url,
-				args
-			);
+			const result = await downloadRemoteFile(filePath, url, args);
 
 			return result;
-		}
-	}
-}
-
-async function downloadRemoteFileWithRetry(
-	filePath: string,
-	url: string,
-	args: Args
-) {
-	for (let i = 0; ; i++) {
-		try {
-			const result = await downloadRemoteFile(filePath, url, args);
-			// maximum number of retries
-			if (i >= args.maxAttempts) {
-				return result;
-			}
-
-			await new Promise((resolve) =>
-				setTimeout(resolve, result.retryAfter)
-			);
-
-			// success or hard failure
-			if (
-				result.ok ||
-				[400, 401, 402, 403, 404, 405, 406, 407, 410].indexOf(
-					result.status
-				) != -1
-			) {
-				return result;
-			}
-		} finally {
-			// failed, but can try again
 		}
 	}
 }
