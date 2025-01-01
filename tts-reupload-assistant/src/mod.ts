@@ -9,10 +9,11 @@ import path from 'node:path';
 import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue.ts';
 import { exists } from 'https://deno.land/std@0.224.0/fs/mod.ts';
 import { DownloadSchedule } from './downloadSchedule.ts';
+import { replaceBulk } from './replaceMultiple.ts';
 
 const args = parseArgs();
 
-let saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
+const saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
 const urls = extractUrls(saveFileContent);
 Log.spaced(false, `URLs detected: ${urls.length}`);
 urls.forEach((url, id) => {
@@ -71,17 +72,16 @@ await runDownloadTasks(downloadTasks, args);
 Log.normal(true, 'end of the download queue');
 Log.normal(true, 'editing save file...');
 
-urls.forEach(function (url, urlIndex) {
+const replacements: [string, string][] = urls.flatMap((url, urlIndex) => {
 	const filePath = path.join(args.tmpPath, String(urlIndex));
 	if (!fs.existsSync(filePath)) {
-		return;
+		return [];
 	}
-
-	saveFileContent = saveFileContent.replaceAll(
-		`"${url}"`,
-		`"file:///${filePath}"`.replaceAll('\\', '/')
-	);
+	return [[`"${url}"`, `"file:///${filePath}"`.replaceAll('\\', '/')]];
 });
+const replacementDict = Object.fromEntries(replacements);
+
+const saveFileContentNew = replaceBulk(saveFileContent, replacementDict);
 
 Log.normal(true, 'finished editing save file');
 Log.normal(true, 'writing new save file...');
@@ -91,6 +91,6 @@ const savePath = path.join(
 	`${path.basename(args.saveFilePath, '.json')}.reupload.json`
 );
 
-fs.writeFileSync(savePath, saveFileContent);
+fs.writeFileSync(savePath, saveFileContentNew);
 
 Log.normal(true, 'finished writing new save file');
