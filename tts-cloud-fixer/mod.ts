@@ -114,7 +114,6 @@ async function removeOrphanFiles(pathCloud: string) {
  * @param pathCloud Folder with "CloudFolder.bson" and "CloudInfo.bson". Example: "E:/Games/Steam/userdata/391694214/286160/remote/".
  */
 export default async function fixCloudFolders(pathCloud: string) {
-	const pathCloudFolder = path.join(pathCloud, 'CloudFolder.bson');
 	const pathCloudInfo = path.join(pathCloud, 'CloudInfo.bson');
 
 	const cloudInfo = loadBson<CloudInfo>(pathCloudInfo);
