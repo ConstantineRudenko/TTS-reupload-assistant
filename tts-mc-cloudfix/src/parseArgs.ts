@@ -1,21 +1,18 @@
 import docopt from 'docopt';
-import process from 'node:process';
 
 interface ArgsRaw {
-	'<cloud-path>': string;
-	'<backup-path>': string;
-	'<operation>': 'clean' | 'corrupt' | 'delete' | 'rescue-folders';
+	clean: boolean;
+	corrupt: boolean;
+	delete: boolean;
+	'rescue-folders': boolean;
+	'<cloud>': string;
 }
 
+type Command = 'clean' | 'corrupt' | 'delete' | 'rescue-folders';
+
 export interface Args {
-	saveFilePath: string;
-	cacheFolder: string;
-	tmpPath: string;
-
-	timeout: number;
-	simultaneous: number;
-
-	noLinks: boolean;
+	command: 'clean' | 'corrupt' | 'delete' | 'rescue-folders';
+	cloudPath: string;
 }
 
 function getArgsRaw(): ArgsRaw {
@@ -23,24 +20,48 @@ function getArgsRaw(): ArgsRaw {
 		return docopt(
 			`TTS reupload helper
 Usage:
-    tts-mc-cloudfix clean-records <cloud>
+    tts-mc-cloudfix clean <cloud>
+    tts-mc-cloudfix corrupt <cloud>
+    tts-mc-cloudfix delete <cloud>
+    tts-mc-cloudfix rescue-folders <cloud>
 
 Arguments:
 	<cloud> Folder with "CloudFolder.bson" and "CloudInfo.bson". Example: "C:/Games/Steam/userdata/123456789/286160/remote/"
 
-Options:
-    --no-links
-        By default soft links are created for existing cached files.
-        Use this option to force copying instead.
-    --timeout=T  [default: 10000]
-        How long to wait in milliseconds for the server response
-        before giving up on a URL.
-    --simultaneous=N [default: 5]
-        How many files should be downloaded simultaneously.
+Procedure:
+	1. Shut down Steam.
+	2. Run: "tts-mc-cloudfix clean <cloud>".
+	3. Run: "tts-mc-cloudfix corrupt <cloud>".
+	4. Launch Steam, start Tabletop Simulator.
+	5. "Sync conflict" window should appear.
+	6. Run: "tts-mc-cloudfix delete <cloud>".
+	7. Click "Upload to the Steam Cloud" in "Sync conflict" window.
+	8. Done.
 
-Output:
-    Will be placed next to the original file with ".reupload"
-    added to the name.
+
+Commands:
+	clean
+		When you delete a folder in your Steam cloud from Cloud Manager in
+		Tabletop Simulator, it does not bother to delete files from inside that
+		folder. These files will no longer be visible in UI, but their records
+		will remain.
+	corrupt
+		You can't just delete files from Steam cloud because it will download
+		them right back. Instead, you need to bring up the "Sync conflict"
+		dialog. The "corrupt" command will replace the contents of orphaned
+		files with garbage, so you can bring up "Sync conflict" dialog and
+		delete them for real.
+	delete
+		Deletes the orphaned files from Tabletop Simulator in Steam cloud.
+	rescue-folders
+		Normally, this option should never be needed. Other tools may
+		accidentally erase records of your Steam cloud folders in Tabletop
+		Simulator. When it happens, it will look as if all files are in the
+		root folder. The file records contain the folder where this file is
+		to be placed, but Tabletop Simulator will ignore it if the
+		corresponding folder does not exist. The "rescue-folders" option will
+		find missing folder records based on your file records and re-create
+		them.
 `
 		) as unknown as ArgsRaw;
 	} catch (err: any) {
@@ -49,38 +70,22 @@ Output:
 	}
 }
 
+function pickCommand(argsRaw: ArgsRaw): Command {
+	switch (true) {
+		case argsRaw.clean:
+			return 'clean';
+		case argsRaw.corrupt:
+			return 'corrupt';
+		case argsRaw.delete:
+			return 'delete';
+		case argsRaw['rescue-folders']:
+			return 'rescue-folders';
+		default:
+			throw new RangeError(`Unrecognized command.`);
+	}
+}
+
 export default function parseArgs(): Args {
 	const opts = getArgsRaw();
-
-	return {
-		saveFilePath: opts['<tts-save-file>'],
-		tmpPath: opts['<temp-folder>'],
-		cacheFolder: opts['<tts-cache-folder>'],
-		noLinks: Boolean(opts['--no-links']),
-		timeout: parseTimeout(opts['--timeout']),
-		simultaneous: parseSimultaneous(opts['--simultaneous'] ?? '5'),
-	};
-}
-
-function parseSimultaneous(sSimultaneous: string): number {
-	const simultaneous = Number(sSimultaneous);
-	switch (true) {
-		case isNaN(simultaneous):
-		case simultaneous <= 0:
-			console.log('Invalid number of simultaneous downloads.');
-			console.log(sSimultaneous);
-			process.exit();
-	}
-	return simultaneous;
-}
-
-function parseTimeout(sTimeout: string): number {
-	const timeout = Number(sTimeout);
-	switch (true) {
-		case isNaN(timeout):
-		case timeout <= 0:
-			console.log('Invalid timeout provided');
-			process.exit();
-	}
-	return timeout;
+	return { command: pickCommand(opts), cloudPath: opts['<cloud>'] };
 }

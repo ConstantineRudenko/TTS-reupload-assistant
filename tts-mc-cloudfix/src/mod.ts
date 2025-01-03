@@ -1,4 +1,5 @@
 import { loadBson } from './loadBson.ts';
+import parseArgs from './parseArgs.ts';
 import { getCloudInfo, cloudFileNames, CloudInfo } from './getCloudInfo.ts';
 import * as path from 'jsr:@std/path';
 
@@ -25,7 +26,10 @@ async function corruptOrphanFiles(pathCloud: string) {
 		orphanFiles.map((file) =>
 			(async () => {
 				const orphanPath = path.join(pathCloud, file);
-				await Deno.writeTextFile(orphanPath, 'w');
+				await Deno.writeTextFile(
+					orphanPath,
+					"I shouldn't have to do this"
+				);
 			})()
 		)
 	);
@@ -78,4 +82,5 @@ export default async function fixCloudFolders(pathCloud: string) {
 	console.log(fileOrphans);
 }
 
-console.log(getActiveFiles('E:/Games/Steam/userdata/391694214/286160/remote/'));
+// console.log(getActiveFiles('E:/Games/Steam/userdata/391694214/286160/remote/'));
+console.log(JSON.stringify(parseArgs()));
