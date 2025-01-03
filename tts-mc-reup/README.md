@@ -1,6 +1,11 @@
 # TTS-reupload-assistant
 
-Reroutes all URLs in a save file (images, meshes, asset bundles, etc.) to local copies for a complete re-upload. Downloads URLs that have not been cached.
+Normally, "Upload All" option in  Tabletop Simulator will not upload files that are already in Steam cloud, even if it isn't **your** Steam cloud. Which means files can suddenly become unavailable after *supposedly* making a backup in your Steam cloud.
+
+This program will download *(or extracts from cache)* all files *(images, meshes, sounds, asset bundles, etc.)* linked by a Tabletop Simulator save file. All these files will be placed into a user-provided directory, and a new save file will be created next to the original one, with all the links rerouted to said directory.
+
+This will force Tabletop Simulator to re-upload **all files** *(when clicking "Upload All" on the new save file)*, even those that were linked to someone's Steam cloud *(yours or otherwise)*.
+
 
 ## Self-signed certificates
 

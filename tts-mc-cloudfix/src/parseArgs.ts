@@ -23,7 +23,7 @@ function getArgsRaw(): ArgsRaw {
 		return docopt(
 			`TTS reupload helper
 Usage:
-    reup.js <tts-save-file> <tts-cache-folder> <temp-folder> [options]
+    tts-mc-cloudfix <tts-save-file> <tts-cache-folder> <temp-folder> [options]
 
 Arguments:
     <tts-save-file>
