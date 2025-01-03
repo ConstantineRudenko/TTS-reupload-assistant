@@ -1,5 +1,5 @@
 import { loadBson } from './loadBson.ts';
-import { getCloudInfo, cloudFileNames } from './getCloudInfo.ts';
+import { getCloudInfo, cloudFileNames, CloudInfo } from './getCloudInfo.ts';
 import * as path from 'jsr:@std/path';
 
 function getActiveFiles(pathCloud: string): string[] {
@@ -79,4 +79,3 @@ export default async function fixCloudFolders(pathCloud: string) {
 }
 
 console.log(getActiveFiles('E:/Games/Steam/userdata/391694214/286160/remote/'));
-// await removeOrphanFiles('E:/Games/Steam/userdata/391694214/286160/remote/');
