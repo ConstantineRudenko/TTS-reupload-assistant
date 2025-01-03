@@ -36,9 +36,9 @@ Arguments:
 		alters them.
 
 Procedure:
-	1. Launch Tabletop Simulator.
 	1. Run: "tts-mc-cloudfix clean <cloud>".
-	2. Close and reopen Tabletop Simulator. Open the Cloud Manager.
+	2. Open Tabletop Simulator. 
+	   Open the Cloud Manager.
 	   Check if everything still looks OK.
 	3. Shut down Steam.
 	3. Run: "tts-mc-cloudfix corrupt <cloud>".
@@ -58,6 +58,11 @@ Commands:
 		folder. These files will no longer be visible in UI, but their records
 		will remain. The "clean" command will purge the records of the orphaned
 		files, but it will not delete them from your Steam cloud.
+
+		This might have been fixed in Tabletop Simulator at some point, making
+		the "clean" command unnecessary. The fix prevents new orphaned records,
+		but at the time of writing it did not remove pre-existing ones from
+		before the fixed was rolled out.
 	corrupt
 		You can't just delete files from Steam cloud because it will download
 		them right back. Instead, you need to bring up the "Sync conflict"
@@ -65,14 +70,11 @@ Commands:
 		files with garbage, so you can bring up "Sync conflict" dialog and
 		delete them for real.
 	rescue-folders
-		Normally, this option should never be needed. Other tools may
-		accidentally erase records of your Steam cloud folders in Tabletop
-		Simulator. When it happens, it will look as if all files are in the
-		root folder. The file records contain the folder where this file is
-		to be placed, but Tabletop Simulator will ignore it if the
-		corresponding folder does not exist. The "rescue-folders" option will
-		find missing folder records based on your file records and re-create
-		them.
+		Normally, this option should never be needed. Recreates the file
+		"CloudFolder.bson" in your Steam Cloud from the redundant data inside
+		"CloudInfo.bson". Empty folders will be lost.
+
+		This command can be useful if "CloudFolder.bson" somehow got corrupted.
 `
 		) as unknown as ArgsRaw;
 	} catch (err: any) {
