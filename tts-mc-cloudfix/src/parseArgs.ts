@@ -6,13 +6,15 @@ interface ArgsRaw {
 	delete: boolean;
 	'rescue-folders': boolean;
 	'<cloud>': string;
+	'<backup>': string;
 }
 
 type Command = 'clean' | 'corrupt' | 'delete' | 'rescue-folders';
 
 export interface Args {
 	command: 'clean' | 'corrupt' | 'delete' | 'rescue-folders';
-	cloudPath: string;
+	pathCloud: string;
+	pathBackup: string;
 }
 
 function getArgsRaw(): ArgsRaw {
@@ -20,8 +22,8 @@ function getArgsRaw(): ArgsRaw {
 		return docopt(
 			`TTS CloudFix
 Usage:
-    tts-mc-cloudfix clean <cloud>
-    tts-mc-cloudfix corrupt <cloud>
+    tts-mc-cloudfix clean <cloud> <backup>
+    tts-mc-cloudfix corrupt <cloud> <backup>
     tts-mc-cloudfix delete <cloud>
     tts-mc-cloudfix rescue-folders <cloud>
 
@@ -29,15 +31,19 @@ Arguments:
 	<cloud>
 		Folder with "CloudFolder.bson" and "CloudInfo.bson".
 		Example: "C:/Games/Steam/userdata/123456789/286160/remote/"
+	<backup>
+		Backup folder. The original files will be copied here before the tool
+		alters them.
 
 Procedure:
 	1. Launch Tabletop Simulator.
 	1. Run: "tts-mc-cloudfix clean <cloud>".
-	2. Close and reopen Tabletop Simulator. Open the Cloud Manager. Check if everything still looks OK.
+	2. Close and reopen Tabletop Simulator. Open the Cloud Manager.
+	   Check if everything still looks OK.
 	3. Shut down Steam.
 	3. Run: "tts-mc-cloudfix corrupt <cloud>".
 	4. Launch Steam, start Tabletop Simulator.
-	5. "Sync conflict" window should appear.
+	   "Sync conflict" window should appear.
 	6. Run: "tts-mc-cloudfix delete <cloud>".
 	7. Choose "Local Save" in "Sync conflict" window and click "Continue".
 	8. Done.
@@ -92,5 +98,9 @@ function pickCommand(argsRaw: ArgsRaw): Command {
 
 export default function parseArgs(): Args {
 	const opts = getArgsRaw();
-	return { command: pickCommand(opts), cloudPath: opts['<cloud>'] };
+	return {
+		command: pickCommand(opts),
+		pathCloud: opts['<cloud>'],
+		pathBackup: opts['<backup>'],
+	};
 }
