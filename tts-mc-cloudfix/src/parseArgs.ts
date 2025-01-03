@@ -18,7 +18,7 @@ export interface Args {
 function getArgsRaw(): ArgsRaw {
 	try {
 		return docopt(
-			`TTS reupload helper
+			`TTS CloudFix
 Usage:
     tts-mc-cloudfix clean <cloud>
     tts-mc-cloudfix corrupt <cloud>
@@ -26,33 +26,38 @@ Usage:
     tts-mc-cloudfix rescue-folders <cloud>
 
 Arguments:
-	<cloud> Folder with "CloudFolder.bson" and "CloudInfo.bson". Example: "C:/Games/Steam/userdata/123456789/286160/remote/"
+	<cloud>
+		Folder with "CloudFolder.bson" and "CloudInfo.bson".
+		Example: "C:/Games/Steam/userdata/123456789/286160/remote/"
 
 Procedure:
-	1. Shut down Steam.
-	2. Run: "tts-mc-cloudfix clean <cloud>".
+	1. Launch Tabletop Simulator.
+	1. Run: "tts-mc-cloudfix clean <cloud>".
+	2. Close and reopen Tabletop Simulator. Open the Cloud Manager. Check if everything still looks OK.
+	3. Shut down Steam.
 	3. Run: "tts-mc-cloudfix corrupt <cloud>".
 	4. Launch Steam, start Tabletop Simulator.
 	5. "Sync conflict" window should appear.
 	6. Run: "tts-mc-cloudfix delete <cloud>".
-	7. Click "Upload to the Steam Cloud" in "Sync conflict" window.
+	7. Choose "Local Save" in "Sync conflict" window and click "Continue".
 	8. Done.
 
 
 Commands:
+	delete
+		Deletes the orphaned files from Tabletop Simulator in Steam cloud.
 	clean
 		When you delete a folder in your Steam cloud from Cloud Manager in
 		Tabletop Simulator, it does not bother to delete files from inside that
 		folder. These files will no longer be visible in UI, but their records
-		will remain.
+		will remain. The "clean" command will purge the records of the orphaned
+		files, but it will not delete them from your Steam cloud.
 	corrupt
 		You can't just delete files from Steam cloud because it will download
 		them right back. Instead, you need to bring up the "Sync conflict"
 		dialog. The "corrupt" command will replace the contents of orphaned
 		files with garbage, so you can bring up "Sync conflict" dialog and
 		delete them for real.
-	delete
-		Deletes the orphaned files from Tabletop Simulator in Steam cloud.
 	rescue-folders
 		Normally, this option should never be needed. Other tools may
 		accidentally erase records of your Steam cloud folders in Tabletop

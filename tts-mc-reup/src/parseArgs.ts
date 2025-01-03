@@ -28,7 +28,7 @@ export interface Args {
 function getArgsRaw(): ArgsRaw {
 	try {
 		return docopt(
-			`TTS reupload helper
+			`TTS Reupload Helper
 Usage:
     tts-mc-reup <tts-save-file> <tts-cache-folder> <temp-folder> [options]
 
