@@ -4,7 +4,7 @@ import process from 'node:process';
 interface ArgsRaw {
 	'<cloud-path>': string;
 	'<backup-path>': string;
-	'<operation>': 'clean-records' | 'corrupt' | 'delete' | 'rescue-folders';
+	'<operation>': 'clean' | 'corrupt' | 'delete' | 'rescue-folders';
 }
 
 export interface Args {
@@ -23,18 +23,10 @@ function getArgsRaw(): ArgsRaw {
 		return docopt(
 			`TTS reupload helper
 Usage:
-    tts-mc-cloudfix <tts-save-file> <tts-cache-folder> <temp-folder> [options]
+    tts-mc-cloudfix clean-records <cloud>
 
 Arguments:
-    <tts-save-file>
-        TTS save file to be processed.
-        Example:    "Documents/My Games/Tabletop Simulator/
-                      Saves/TS_Save_96.json"
-    <tts-cache-folder>
-        TTS local mod cache.
-        Example:    "Documents/My Games/Tabletop Simulator/Mods/"
-    <temp-folder>
-        Any folder to hold the downloaded files.
+	<cloud> Folder with "CloudFolder.bson" and "CloudInfo.bson". Example: "C:/Games/Steam/userdata/123456789/286160/remote/"
 
 Options:
     --no-links

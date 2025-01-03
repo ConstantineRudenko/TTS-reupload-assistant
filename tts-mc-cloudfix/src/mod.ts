@@ -1,69 +1,6 @@
-import * as bson from 'npm:bson';
+import { loadBson } from './loadBson.ts';
+import { getCloudInfo, cloudFileNames } from './getCloudInfo.ts';
 import * as path from 'jsr:@std/path';
-
-const FNames = {
-	CloudInfo: 'CloudInfo.bson',
-	CloudFolder: 'CloudFolder.bson',
-};
-const allFNames = Object.values(FNames);
-
-function loadBson<T>(pathBson: string) {
-	const data = Deno.readFileSync(pathBson);
-	return bson.deserialize(data) as T;
-}
-
-type CloudInfo = Record<
-	string,
-	{
-		Name: string;
-		URL: string;
-		Size: number;
-		Date: string;
-		Folder: string;
-	}
->;
-
-type CloudFolder = Record<string, string>;
-
-function getCloudFiles(pathCloud: string) {
-	const pathCloudInfo = path.join(pathCloud, FNames.CloudInfo);
-	return loadBson<CloudInfo>(pathCloudInfo);
-}
-
-function getCloudFolders(pathCloud: string) {
-	const pathCloudFolder = path.join(pathCloud, FNames.CloudFolder);
-	return Object.values(loadBson<CloudFolder>(pathCloudFolder));
-}
-
-function getCloudInfo(pathCloud: string) {
-	return {
-		cloudFiles: getCloudFiles(pathCloud),
-		cloudFolders: getCloudFolders(pathCloud),
-	};
-}
-
-function getGhostRecordKeys(pathCloud: string): string[] {
-	const { cloudFiles, cloudFolders } = getCloudInfo(pathCloud);
-	return Object.entries(cloudFiles)
-		.filter(
-			([_, fileInfo]) =>
-				!(
-					fileInfo.Folder == '' ||
-					cloudFolders.includes(fileInfo.Folder)
-				)
-		)
-		.map(([fname, _]) => fname);
-}
-
-function getCleanedCloudFiles(pathCloud: string): CloudInfo {
-	const { cloudFiles } = getCloudInfo(pathCloud);
-	const ghostRecordKeys = getGhostRecordKeys(pathCloud);
-	return Object.fromEntries(
-		Object.entries(cloudFiles).filter(
-			([fname, _]) => !ghostRecordKeys.includes(fname)
-		)
-	);
-}
 
 function getActiveFiles(pathCloud: string): string[] {
 	const { cloudFiles } = getCloudInfo(pathCloud);
@@ -73,7 +10,8 @@ function getActiveFiles(pathCloud: string): string[] {
 function getOrphanFiles(pathCloud: string) {
 	const existingFiles = Array.from(Deno.readDirSync(pathCloud))
 		.filter(
-			(dirEntry) => dirEntry.isFile && !allFNames.includes(dirEntry.name)
+			(dirEntry) =>
+				dirEntry.isFile && !cloudFileNames.includes(dirEntry.name)
 		)
 		.map((dirEntry) => dirEntry.name);
 	const filesActive = getActiveFiles(pathCloud);
@@ -109,10 +47,6 @@ async function removeOrphanFiles(pathCloud: string) {
 	);
 }
 
-/**
- *
- * @param pathCloud Folder with "CloudFolder.bson" and "CloudInfo.bson". Example: "E:/Games/Steam/userdata/391694214/286160/remote/".
- */
 export default async function fixCloudFolders(pathCloud: string) {
 	const pathCloudInfo = path.join(pathCloud, 'CloudInfo.bson');
 
