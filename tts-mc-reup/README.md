@@ -26,8 +26,9 @@ deno run --unsafely-ignore-certificate-errors src/mod.js
 ## Usage
 
 ```
+TTS Reupload Helper
 Usage:
-    reup.js <tts-save-file> <tts-cache-folder> <temp-folder> [options]
+    tts-mc-reup <tts-save-file> <tts-cache-folder> <temp-folder> [options]
 
 Arguments:
     <tts-save-file>
@@ -41,16 +42,22 @@ Arguments:
         Any folder to hold the downloaded files.
 
 Options:
-    --no-links
-        By default soft links are created for existing cached files.
-        Use this option to force copying instead.
+    --resume
+        By default the <temp-folder> is expected to be empty, and an error
+        will be raised otherwise. With this flag, files that already exist
+        in <temp-folder> will not be re-downloaded. This allows to resume
+        after a crash. If the wrong <temp-folder> is provided or the save file
+        has changed since the last attempt, resuming will corrupt the newly
+        created save file by linking wrong files from <temp-folder>.
+    --links
+        Make soft links instead of copying local files.
+    --max-attempts=N [default:5]
+        How many times to retry a failed download before giving up.
+    --simultaneous=N [default: 5]
+        How many files should be downloaded simultaneously.
     --timeout=T  [default: 10000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
-	--max-attempts=N [default:5]
-		How many times to retry a failed download before giving up.
-    --simultaneous=N [default: 5]
-        How many files should be downloaded simultaneously.
 
 Output:
     Will be placed next to the original file with ".reupload"
