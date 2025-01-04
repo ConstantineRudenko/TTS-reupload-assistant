@@ -8,16 +8,16 @@ const args = parseArgs();
 
 switch (args.command) {
 	case 'clean':
-		cleanOrphanFileRecords(args.pathCloud);
+		cleanOrphanFileRecords(args);
 		break;
 	case 'corrupt':
-		corruptOrphanFiles(args.pathCloud);
+		corruptOrphanFiles(args);
 		break;
 	case 'delete':
-		deleteOrphanFiles(args.pathCloud);
+		deleteOrphanFiles(args);
 		break;
 	case 'rescue-folders':
-		rescueFolders(args.pathCloud);
+		rescueFolders(args);
 		break;
 	default:
 		throw new Error('Unrecognized command.');

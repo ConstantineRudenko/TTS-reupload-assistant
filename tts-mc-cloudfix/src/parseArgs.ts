@@ -23,9 +23,9 @@ function getArgsRaw(): ArgsRaw {
 			`TTS CloudFix
 Usage:
     tts-mc-cloudfix clean <cloud> <backup>
-    tts-mc-cloudfix corrupt <cloud> <backup>
+    tts-mc-cloudfix corrupt <cloud>
     tts-mc-cloudfix delete <cloud>
-    tts-mc-cloudfix rescue-folders <cloud>
+    tts-mc-cloudfix rescue-folders <cloud> <backup>
 
 Arguments:
     <cloud>

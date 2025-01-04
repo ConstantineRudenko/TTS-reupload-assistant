@@ -1,8 +1,8 @@
-import { saveBsonSync } from './bson.ts';
+import { Args } from './parseArgs.ts';
 import { getCloudInfo, CloudFiles, writeCloudInfo } from './shared.ts';
 
-function getGhostRecordKeys(pathCloud: string): string[] {
-	const { cloudFiles, cloudFolders } = getCloudInfo(pathCloud);
+function getGhostRecordKeys(args: Args): string[] {
+	const { cloudFiles, cloudFolders } = getCloudInfo(args);
 	return Object.entries(cloudFiles)
 		.filter(
 			([_, fileInfo]) =>
@@ -14,9 +14,9 @@ function getGhostRecordKeys(pathCloud: string): string[] {
 		.map(([fname, _]) => fname);
 }
 
-function getCleanedCloudFiles(pathCloud: string): CloudFiles {
-	const { cloudFiles } = getCloudInfo(pathCloud);
-	const ghostRecordKeys = getGhostRecordKeys(pathCloud);
+function getCleanedCloudFiles(args: Args): CloudFiles {
+	const { cloudFiles } = getCloudInfo(args);
+	const ghostRecordKeys = getGhostRecordKeys(args);
 	console.log(`orphan file records: ${ghostRecordKeys.length}`);
 	return Object.fromEntries(
 		Object.entries(cloudFiles).filter(
@@ -25,6 +25,6 @@ function getCleanedCloudFiles(pathCloud: string): CloudFiles {
 	);
 }
 
-export function cleanOrphanFileRecords(pathCloud: string) {
-	writeCloudInfo({ cloudFiles: getCleanedCloudFiles(pathCloud) }, pathCloud);
+export function cleanOrphanFileRecords(args: Args) {
+	writeCloudInfo({ cloudFiles: getCleanedCloudFiles(args) }, args);
 }

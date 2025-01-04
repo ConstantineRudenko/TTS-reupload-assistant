@@ -1,8 +1,14 @@
 import * as bson from 'bson';
 
-export function loadBsonSync<T>(pathBson: string) {
-	const data = Deno.readFileSync(pathBson);
-	return bson.deserialize(data) as T;
+export function loadBsonSync<
+	T extends [] | Record<string | number | symbol, unknown>
+>(pathBson: string) {
+	try {
+		const data = Deno.readFileSync(pathBson);
+		return bson.deserialize(data) as T;
+	} catch (err: any) {
+		return {} as T;
+	}
 }
 
 export function saveBsonSync<T extends bson.Document>(

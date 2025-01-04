@@ -1,6 +1,8 @@
 import { loadBsonSync, saveBsonSync } from './bson.ts';
+import {Args} from './parseArgs.ts'
 
 import * as path from 'path';
+import * as fs from 'fs';
 
 const cloudFileNames = {
 	CloudInfo: 'CloudInfo.bson',
@@ -19,63 +21,90 @@ export type CloudFiles = Record<
 		Folder: string;
 	}
 >;
-export type CloudFolder = Record<string, string>;
+export type CloudFolders = Record<string, string>;
 
 export interface CloudInfo {
 	cloudFiles: CloudFiles,
-	cloudFolders: CloudFolder[]
+	cloudFolders: string[]
 };
 
-function getCloudFiles(pathCloud: string) {
-	const pathCloudInfo = path.join(pathCloud, cloudFileNames.CloudInfo);
+function getBsonPaths(args: Args){
+	const pathCloudInfo = path.join(args.pathCloud, cloudFileNames.CloudInfo);
+	const pathCloudFolder = path.join(args.pathCloud, cloudFileNames.CloudFolder);
+	return {pathCloudFolder, pathCloudInfo};
+}
+
+function getCloudFiles(args: Args) {
+	const {pathCloudInfo} = getBsonPaths(args);
 	return loadBsonSync<CloudFiles>(pathCloudInfo);
 }
 
-function getCloudFolders(pathCloud: string) {
-	const pathCloudFolder = path.join(pathCloud, cloudFileNames.CloudFolder);
-	return Object.values(loadBsonSync<CloudFolder>(pathCloudFolder));
+function getCloudFolders(args: Args) {
+	const {pathCloudFolder} = getBsonPaths(args);
+	return Object.values(loadBsonSync<CloudFolders>(pathCloudFolder));
 }
 
-function writeCloudFiles(cloudFiles: CloudFiles, pathCloud: string){
-	const pathCloudInfo = path.join(pathCloud, cloudFileNames.CloudInfo);
+function writeCloudFiles(cloudFiles: CloudFiles, args: Args){
+	const {pathCloudInfo} = getBsonPaths(args)
 	saveBsonSync(cloudFiles, pathCloudInfo);
 }
 
-function writeCloudFolders(cloudFolders: CloudFolder[], pathCloud: string){
-	const pathCloudFolder = path.join(pathCloud, cloudFileNames.CloudFolder);
-	const obj = Object.fromEntries(cloudFolders.toSorted().map((value, id) => [id, value]));
+function writeCloudFolders(cloudFolders: string[], args: Args){
+	const {pathCloudFolder} = getBsonPaths(args);
+	const obj:CloudFolders = Object.fromEntries(cloudFolders.toSorted().map((value, id) => [id, value]));
 	saveBsonSync(obj, pathCloudFolder)
 }
 
-export function writeCloudInfo(cloudInfo: Partial<CloudInfo>, pathCloud: string) {
+function getBackupPath(fname: string, args: Args){
+	const dateString = new Date().toISOString().replaceAll(':', "-");
+	const newFname = `${dateString}_${fname}`;
+	return path.join(args.pathBackup, newFname)
+}
+
+function backupFile(path: string, fname: string, args:Args){
+	const backupPath = getBackupPath(fname, args);
+	if(!fs.existsSync(path)){
+		return;
+	}
+	if (fs.existsSync(backupPath)){
+		throw new Error(`File already exists: ${backupPath}`);
+	}
+	Deno.copyFileSync(path, backupPath);
+}
+
+export function writeCloudInfo(cloudInfo: Partial<CloudInfo>, args: Args) {
+	const bsonPaths = getBsonPaths(args);
+
+	backupFile(bsonPaths.pathCloudFolder, cloudFileNames.CloudFolder, args);
+	backupFile(bsonPaths.pathCloudInfo, cloudFileNames.CloudInfo, args);
+
 	if (cloudInfo.cloudFiles != undefined){
-		writeCloudFiles(cloudInfo.cloudFiles, pathCloud);
+		writeCloudFiles(cloudInfo.cloudFiles, args);
 	}
 	if (cloudInfo.cloudFolders != undefined){
-		writeCloudFolders(cloudInfo.cloudFolders, pathCloud);
+		writeCloudFolders(cloudInfo.cloudFolders, args);
 	}
 }
 
-export function getCloudInfo(pathCloud: string) {
+export function getCloudInfo(args: Args) {
 	return {
-		cloudFiles: getCloudFiles(pathCloud),
-		cloudFolders: getCloudFolders(pathCloud),
+		cloudFiles: getCloudFiles(args),
+		cloudFolders: getCloudFolders(args),
 	};
 }
 
-function getActiveFiles(pathCloud: string): string[] {
-	const { cloudFiles } = getCloudInfo(pathCloud);
+function getActiveFiles(args: Args): string[] {
+	const { cloudFiles } = getCloudInfo(args);
 	return Object.entries(cloudFiles).map(([fname, _]) => fname);
 }
 
-export function getOrphanFiles(pathCloud: string) {
-	const existingFiles = Array.from(Deno.readDirSync(pathCloud))
+export function getOrphanFiles(args:Args) {
+	const existingFiles = Array.from(Deno.readDirSync(args.pathCloud))
 		.filter(
 			(dirEntry) =>
 				dirEntry.isFile && !cloudFileNamesArr.includes(dirEntry.name)
 		)
 		.map((dirEntry) => dirEntry.name);
-	const filesActive = getActiveFiles(pathCloud);
+	const filesActive = getActiveFiles(args);
 	return existingFiles.filter((fname) => !filesActive.includes(fname));
 }
-

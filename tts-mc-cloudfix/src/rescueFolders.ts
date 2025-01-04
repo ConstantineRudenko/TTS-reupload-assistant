@@ -1,7 +1,20 @@
-import { getOrphanFiles } from './shared.ts';
+import { Args } from './parseArgs.ts';
+import { getCloudInfo, writeCloudInfo } from './shared.ts';
 
-import * as path from 'path';
+export function rescueFolders(args: Args) {
+	const cloudInfo = getCloudInfo(args);
 
-export function rescueFolders(pathCloud: string) {
-	throw new Error('Not implemented');
+	const cloudFolders = Array.from(
+		new Set(
+			Object.values(cloudInfo.cloudFiles).flatMap((file) =>
+				file.Folder.split('\\').map((_, id, arr) =>
+					arr.slice(0, id + 1).join('\\')
+				)
+			)
+		)
+	);
+
+	console.log(JSON.stringify(cloudFolders, null, 2));
+
+	writeCloudInfo({ cloudFolders }, args);
 }
