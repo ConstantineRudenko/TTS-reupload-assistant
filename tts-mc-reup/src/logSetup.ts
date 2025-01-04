@@ -1,6 +1,21 @@
 import { existsSync } from 'fs';
 import * as log from 'log';
 
+function logFileFormatter(record: log.LogRecord) {
+	const json = JSON.stringify(
+		{
+			time: record.datetime.toUTCString,
+			level: record.level,
+			levelName: record.levelName,
+			message: record.msg,
+			data: record.args,
+		},
+		null,
+		2
+	);
+	return `${json}\n`;
+}
+
 export default function logSetup() {
 	const logDir = './logs';
 
@@ -26,38 +41,14 @@ export default function logSetup() {
 				filename: `./logs/${new Date()
 					.toISOString()
 					.replaceAll(':', '-')}.log`,
-				formatter: (record) => {
-					const json = JSON.stringify(
-						{
-							time: record.datetime.toUTCString,
-							level: record.level,
-							levelName: record.levelName,
-							message: record.msg,
-							data: record.args,
-						},
-						null,
-						2
-					);
-					return `${json}\n`;
-				},
+				formatter: logFileFormatter,
 				mode: 'x',
 			}),
 			fileError: new log.FileHandler('ERROR', {
 				filename: `./logs/${new Date()
 					.toISOString()
 					.replaceAll(':', '-')}.ERROR.log`,
-				formatter: (record) =>
-					JSON.stringify(
-						{
-							time: record.datetime.toUTCString,
-							level: record.level,
-							levelName: record.levelName,
-							message: record.msg,
-							data: record.args,
-						},
-						null,
-						2
-					),
+				formatter: logFileFormatter,
 				mode: 'x',
 			}),
 		},
