@@ -26,8 +26,8 @@ export default function logSetup() {
 				filename: `./logs/${new Date()
 					.toISOString()
 					.replaceAll(':', '-')}.log`,
-				formatter: (record) =>
-					JSON.stringify(
+				formatter: (record) => {
+					const json = JSON.stringify(
 						{
 							time: record.datetime.toUTCString,
 							level: record.level,
@@ -37,7 +37,9 @@ export default function logSetup() {
 						},
 						null,
 						2
-					),
+					);
+					return `${json}\n`;
+				},
 				mode: 'x',
 			}),
 			fileError: new log.FileHandler('ERROR', {
