@@ -1,10 +1,12 @@
-import * as Log from './logger.ts';
 import { Args } from './parseArgs.ts';
 import fsPromises from 'node:fs/promises';
+import { getLogger } from 'log';
 
 function defaultRetryTime() {
 	return new Date().getTime() + 10000;
 }
+
+const logger = getLogger();
 
 function normalizeUrl(url: string): string {
 	// If the URL starts with "http" or "https", it's already complete
@@ -105,7 +107,7 @@ export default async function downloadFile(
 	urlIndex: number,
 	args: Args
 ): Promise<DownloadResut> {
-	Log.withUrl(false, url, urlIndex, 'started downloading');
+	logger.debug('Started downloading.', { url, urlIndex });
 
 	switch (true) {
 		case url.slice(0, 8) == 'file:///': {
@@ -117,7 +119,7 @@ export default async function downloadFile(
 				await fsPromises.symlink(filepath, filePath);
 			}
 
-			Log.withUrl(false, url, urlIndex, 'picked local file');
+			logger.debug('Picked local file', { url, urlIndex });
 
 			return {
 				ok: true,

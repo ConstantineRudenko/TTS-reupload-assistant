@@ -1,5 +1,4 @@
 import * as Cache from './enumerateCachedFiles.ts';
-import * as Log from './logger.ts';
 import downloadFile, { DownloadResut } from './downloadFile.ts';
 import extractUrls from './extractUrls.ts';
 import fs from 'node:fs';
@@ -10,15 +9,59 @@ import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue.ts';
 import { exists } from 'https://deno.land/std@0.224.0/fs/mod.ts';
 import { DownloadSchedule } from './downloadSchedule.ts';
 import { replaceBulk } from './replaceMultiple.ts';
+import * as log from 'log';
+
+Deno.mkdirSync('./logs');
+
+log.setup({
+	handlers: {
+		console: new log.ConsoleHandler('INFO', {
+			// formatter: log.formatters.jsonFormatter,
+			formatter: (record) =>
+				`[${record.datetime.toTimeString()}] ${record.levelName}: ${
+					record.msg
+				}${
+					record.args.length
+						? `\n${JSON.stringify(record.args, null, 2)}`
+						: ''
+				}\n`,
+			useColors: true,
+		}),
+		file: new log.FileHandler('DEBUG', {
+			filename: `./logs/${new Date()
+				.toISOString()
+				.replaceAll(':', '-')}.log`,
+			formatter: (record) =>
+				JSON.stringify(
+					{
+						time: record.datetime.toUTCString,
+						level: record.level,
+						levelName: record.levelName,
+						message: record.msg,
+						data: record.args,
+					},
+					null,
+					2
+				),
+			mode: 'x',
+		}),
+	},
+	loggers: {
+		default: {
+			level: 'DEBUG',
+			handlers: ['console', 'file'],
+		},
+	},
+});
 
 const args = parseArgs();
 
+const logger = log.getLogger('default');
+
 const saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
 const urls = extractUrls(saveFileContent);
-Log.spaced(false, `URLs detected: ${urls.length}`);
-urls.forEach((url, id) => {
-	Log.withUrl(false, url, id);
-});
+logger.info(`URLs detected.`, { numUrls: urls.length });
+logger.debug(`URLs`, { urls: urls });
 
 const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
 
@@ -26,7 +69,7 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 	url,
 	urlIndex
 ): UrlDownloadTask {
-	Log.withUrl(false, url, urlIndex, 'queued for processing');
+	logger.debug('URL queued for processing.', { url, urlIndex });
 
 	return {
 		url: url,
@@ -43,6 +86,12 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 			const cachedInstance = Cache.getCachedInstance(cachedFiles, url);
 
 			if (cachedInstance != null) {
+				logger.debug('Found cached file.', {
+					url,
+					urlIndex,
+					cacheFile: cachedInstance.fullPath,
+				});
+
 				if (args.noLinks) {
 					await fsPromises.copyFile(
 						cachedInstance.fullPath,
@@ -65,12 +114,12 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 	};
 });
 
-Log.spaced(false, 'initating the download queue...');
+logger.info('Initating the download queue...');
 
 await runDownloadTasks(downloadTasks, args);
 
-Log.normal(true, 'end of the download queue');
-Log.normal(true, 'editing save file...');
+logger.info('End of the download queue.');
+logger.info('Editing save file...');
 
 const replacements: [string, string][] = urls.flatMap((url, urlIndex) => {
 	const filePath = path.join(args.tmpPath, String(urlIndex));
@@ -83,8 +132,8 @@ const replacementDict = Object.fromEntries(replacements);
 
 const saveFileContentNew = replaceBulk(saveFileContent, replacementDict);
 
-Log.normal(true, 'finished editing save file');
-Log.normal(true, 'writing new save file...');
+logger.info('Finished editing save file.');
+logger.info('Writing new save file...');
 
 const savePath = path.join(
 	path.dirname(args.saveFilePath),
@@ -93,4 +142,4 @@ const savePath = path.join(
 
 fs.writeFileSync(savePath, saveFileContentNew);
 
-Log.normal(true, 'finished writing new save file');
+logger.info('Finished writing new save file.');

@@ -1,18 +1,19 @@
 import 'MadCakeUtil-ts';
 import 'MadCakeUtil-ts-augmentations';
-import * as Log from './logger.ts';
 import { Args } from './parseArgs.ts';
 import { DownloadResut } from './downloadFile.ts';
 import { PriorityQueue } from './PriorityQueue.ts';
 import _urlToFname from './urlToCachedFname.ts'; // unused, but keep in case might want to use
 import { DownloadSchedule } from './downloadSchedule.ts';
+import { getLogger as log } from 'log';
+import ProgressReporter from './ProgressReporter.ts';
 
 const extraTimeout = 500;
 
 export interface UrlDownloadTask {
 	func: () => Promise<DownloadResut>;
 	url: string;
-	urlIndex: number;
+	urlId: number;
 	attempts: number;
 	schedule: DownloadSchedule;
 }
@@ -27,15 +28,35 @@ export async function runDownloadTasks(taskArr: UrlDownloadTask[], args: Args) {
 	for (const task of taskArr) {
 		taskQueue.enqueue(task);
 	}
+	log().info('Download queue launched.', {
+		numTasks: taskArr.length,
+		workers: args.simultaneous,
+	});
 
-	Log.normal(true, `queue size: ${taskArr.length}`);
-	Log.normal(true, `simultaneous downloads: ${args.simultaneous}`);
-
+	const progressReporter = setProgressReporter(taskQueue);
 	await Promise.all(
 		Array.from({ length: args.simultaneous }).map(
 			async () => await worker(taskQueue, args.maxAttempts)
 		)
 	);
+	progressReporter.stop();
+}
+
+function setProgressReporter(taskQueue: PriorityQueue<UrlDownloadTask>) {
+	const totalTasks = taskQueue.items.length;
+
+	function getPercent() {
+		let ratio = 1.0 - taskQueue.items.length / totalTasks;
+		ratio = Math.max(0.0, ratio);
+		ratio = Math.min(1.0, ratio);
+		const percent = (ratio * 100).toFixed(0);
+		const numDone = Math.max(0, totalTasks - taskQueue.items.length);
+		const numTotal = totalTasks;
+		return `${percent}% [${numDone} / ${numTotal}]`;
+	}
+
+	const progressReporter = new ProgressReporter().start(getPercent, 2000);
+	return progressReporter;
 }
 
 async function sleep(milliseconds: number) {
@@ -70,23 +91,26 @@ async function worker(
 			urlDownloadTask.attempts == maxAttempts ||
 			hardFailCodes.indexOf(result.status) != -1
 		) {
-			Log.withUrl(
-				true,
-				urlDownloadTask.url,
-				urlDownloadTask.urlIndex,
-				`Download error. [${result.status}] ${result.statusText}`
-			);
+			log().error('Download error (gave up)', {
+				url: urlDownloadTask.url,
+				urlId: urlDownloadTask.urlId,
+				status: result.status,
+				statusText: result.statusText,
+				attemps: urlDownloadTask.attempts,
+			});
 
 			continue;
 		}
 
 		if (result.status == 'unknown error') {
-			Log.withUrl(
-				true,
-				urlDownloadTask.url,
-				urlDownloadTask.urlIndex,
-				`Download error. ${result.statusText}`
-			);
+			log().warn('Download error (will retry).', {
+				url: urlDownloadTask.url,
+				urlId: urlDownloadTask.urlId,
+				status: result.status,
+				statusText: result.statusText,
+				attemps: urlDownloadTask.attempts,
+				retryAfter: result.retryAfterTime,
+			});
 		}
 
 		// restart after delay
