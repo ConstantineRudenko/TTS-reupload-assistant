@@ -2,4 +2,5 @@ AFAIK, Tabletop Simulator has fixed the issue where file records would remain af
 
 # TODO
 
-implement backup
+* backup
+* rescue-folders
