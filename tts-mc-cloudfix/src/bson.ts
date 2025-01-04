@@ -1,4 +1,4 @@
-import * as bson from 'npm:bson';
+import * as bson from 'bson';
 
 export function loadBsonSync<T>(pathBson: string) {
 	const data = Deno.readFileSync(pathBson);

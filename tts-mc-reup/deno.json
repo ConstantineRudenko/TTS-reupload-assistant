@@ -3,6 +3,8 @@
 		"docopt": "https://deno.land/x/docopt@v1.0.7/mod.ts",
 		"MadCakeUtil-ts": "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/mod.ts",
 		"MadCakeUtil-ts-augmentations": "https://raw.githubusercontent.com/KosRud/MadCakeUtil-ts/8ca35e69632a54db70f1519a2d9e800e486cec05/augmentations.ts",
-		"log": "jsr:@std/log"
+		"log": "jsr:@std/log",
+		"fs": "jsr:@std/fs",
+		"path": "jsr:@std/path"
 	}
 }

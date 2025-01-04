@@ -1,10 +1,18 @@
 # TTS-reupload-assistant
 
-Normally, "Upload All" option in  Tabletop Simulator will not upload files that are already in Steam cloud, even if it isn't **your** Steam cloud. Which means files can suddenly become unavailable after *supposedly* making a backup in your Steam cloud.
+## Problems
 
-This program will download *(or extracts from cache)* all files *(images, meshes, sounds, asset bundles, etc.)* linked by a Tabletop Simulator save file. All these files will be placed into a user-provided directory, and a new save file will be created next to the original one, with all the links rerouted to said directory.
+Normally, "Upload All" option in  Tabletop Simulator will not upload files that are already in Steam cloud. This means, if you have a save file that relies on content scattered all over your Steam cloud, you can't re-upload all of it to a single new folder to make sure that all the dependencies of this save file will remain alive after you clean up some old junk from your Steam cloud.
 
-This will force Tabletop Simulator to re-upload **all files** *(when clicking "Upload All" on the new save file)*, even those that were linked to someone's Steam cloud *(yours or otherwise)*.
+Tabletop Simulator will not upload files that are already in Steam cloud, even if it isn't **your** Steam cloud. Which means files can suddenly become unavailable after *supposedly* making a backup of a room from Steam Workshop in your own Steam cloud.
+
+## Solution
+
+This program will download *(or extract from cache)* all files *(images, meshes, sounds, asset bundles, etc.)* linked by a Tabletop Simulator save file. All these files will be placed into a user-provided directory, and a new save file will be created next to the original one, with all the links rerouted to said directory.
+
+This will force Tabletop Simulator to re-upload **all files** *(when clicking "Upload All" on the new save file)*, even those that were already linked to someone's Steam cloud *(yours or otherwise)*.
+
+Now you can make sure that a single folder in your Steam cloud contains all the dependencies of the given save file, and it is not going anywhere.
 
 
 ## Self-signed certificates

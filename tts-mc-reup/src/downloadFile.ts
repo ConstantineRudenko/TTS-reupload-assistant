@@ -1,12 +1,9 @@
 import { Args } from './parseArgs.ts';
-import fsPromises from 'node:fs/promises';
-import { getLogger } from 'log';
+import { getLogger as log } from 'log';
 
 function defaultRetryTime() {
 	return new Date().getTime() + 10000;
 }
-
-const logger = getLogger();
 
 function normalizeUrl(url: string): string {
 	// If the URL starts with "http" or "https", it's already complete
@@ -25,7 +22,7 @@ function normalizeUrl(url: string): string {
 
 export interface DownloadResut {
 	ok: boolean;
-	status: number | 'abort' | 'unknown error';
+	status: number | 'abort' | 'unknown error' | 'existed';
 	statusText: string;
 	retryAfterTime: number;
 }
@@ -45,7 +42,7 @@ async function downloadRemoteFile(
 		const response = await fetch(normalizedUrl, { signal: abort.signal });
 		if (response.ok) {
 			const text = await response.text();
-			await fsPromises.writeFile(filePath, text, 'utf-8');
+			await Deno.writeTextFile(filePath, text);
 		}
 		return {
 			ok: response.ok,
@@ -104,22 +101,22 @@ async function realPath(p: string) {
 export default async function downloadFile(
 	filePath: string,
 	url: string,
-	urlIndex: number,
+	urlId: number,
 	args: Args
 ): Promise<DownloadResut> {
-	logger.debug('Started downloading.', { url, urlIndex });
+	log().debug('Started downloading.', { url, urlId });
 
 	switch (true) {
 		case url.slice(0, 8) == 'file:///': {
 			const filepath = await realPath(url.slice(8).replaceAll('/', '\\'));
 
-			if (args.noLinks) {
-				await fsPromises.copyFile(filepath, filePath);
+			if (args.links) {
+				await Deno.symlink(filepath, filePath);
 			} else {
-				await fsPromises.symlink(filepath, filePath);
+				await Deno.copyFile(filepath, filePath);
 			}
 
-			logger.debug('Picked local file', { url, urlIndex });
+			log().debug('Picked local file', { url, urlId });
 
 			return {
 				ok: true,

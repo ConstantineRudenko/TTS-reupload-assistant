@@ -1,5 +1,7 @@
 {
 	"imports": {
-		"docopt": "https://deno.land/x/docopt@v1.0.7/mod.ts"
+		"docopt": "https://deno.land/x/docopt@v1.0.7/mod.ts",
+		"bson": "npm:bson",
+		"path": "jsr:@std/path"
 	}
 }

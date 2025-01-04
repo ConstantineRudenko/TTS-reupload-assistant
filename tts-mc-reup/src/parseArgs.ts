@@ -1,5 +1,4 @@
 import docopt from 'docopt';
-import process from 'node:process';
 
 interface ArgsRaw {
 	'<tts-save-file>': string;
@@ -10,7 +9,8 @@ interface ArgsRaw {
 	'--simultaneous': string;
 	'--max-attempts': string;
 
-	'--no-links': string;
+	'--links': boolean;
+	'--resume': boolean;
 }
 
 export interface Args {
@@ -22,7 +22,8 @@ export interface Args {
 	simultaneous: number;
 	maxAttempts: number;
 
-	noLinks: boolean;
+	resume: boolean;
+	links: boolean;
 }
 
 function getArgsRaw(): ArgsRaw {
@@ -44,16 +45,22 @@ Arguments:
         Any folder to hold the downloaded files.
 
 Options:
-    --no-links
-        By default soft links are created for existing cached files.
-        Use this option to force copying instead.
+    --resume
+        By default the <temp-folder> is expected to be empty, and an error
+        will be raised otherwise. With this flag, files that already exist
+        in <temp-folder> will not be re-downloaded. This allows to resume
+        after a crash. If the wrong <temp-folder> is provided or the save file
+        has changed since the last attempt, resuming will corrupt the newly
+        created save file by linking wrong files from <temp-folder>.
+    --links
+        Make soft links instead of copying local files.
+    --max-attempts=N [default:5]
+        How many times to retry a failed download before giving up.
+    --simultaneous=N [default: 5]
+        How many files should be downloaded simultaneously.
     --timeout=T  [default: 10000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
-	--max-attempts=N [default:5]
-		How many times to retry a failed download before giving up.
-    --simultaneous=N [default: 5]
-        How many files should be downloaded simultaneously.
 
 Output:
     Will be placed next to the original file with ".reupload"
@@ -67,17 +74,21 @@ Output:
 	}
 }
 
-export default function parseArgs(): Args {
-	const opts = getArgsRaw();
+export default function parseArgs(): { args: Args; rawArgs: ArgsRaw } {
+	const raw = getArgsRaw();
 
 	return {
-		saveFilePath: opts['<tts-save-file>'],
-		tmpPath: opts['<temp-folder>'],
-		cacheFolder: opts['<tts-cache-folder>'],
-		noLinks: Boolean(opts['--no-links']),
-		timeout: parseTimeout(opts['--timeout'] ?? 0),
-		maxAttempts: parseRetries(opts['--max-attempts'] ?? 5),
-		simultaneous: parseSimultaneous(opts['--simultaneous'] ?? '5'),
+		rawArgs: raw,
+		args: {
+			saveFilePath: raw['<tts-save-file>'],
+			tmpPath: raw['<temp-folder>'],
+			cacheFolder: raw['<tts-cache-folder>'],
+			links: raw['--links'],
+			resume: raw['--resume'],
+			timeout: parseTimeout(raw['--timeout'] ?? 0),
+			maxAttempts: parseRetries(raw['--max-attempts'] ?? 5),
+			simultaneous: parseSimultaneous(raw['--simultaneous'] ?? '5'),
+		},
 	};
 }
 
@@ -85,7 +96,7 @@ function parseRetries(retriesStr: string) {
 	const maxAttempts = Number(retriesStr);
 	if (isNaN(maxAttempts) || maxAttempts < 0) {
 		console.log(`Invalid number of maxAttempts: ${maxAttempts}`);
-		process.exit();
+		Deno.exit();
 	}
 	return maxAttempts;
 }
@@ -96,7 +107,7 @@ function parseSimultaneous(sSimultaneous: string): number {
 		console.log(
 			`Invalid number of simultaneous downloads: ${sSimultaneous}`
 		);
-		process.exit();
+		Deno.exit();
 	}
 	return simultaneous;
 }
@@ -105,7 +116,7 @@ function parseTimeout(sTimeout: string): number {
 	const timeout = Number(sTimeout);
 	if (isNaN(timeout) || timeout <= 0) {
 		console.log('Invalid timeout provided');
-		process.exit();
+		Deno.exit();
 	}
 	return timeout;
 }

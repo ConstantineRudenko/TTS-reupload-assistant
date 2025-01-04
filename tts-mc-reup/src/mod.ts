@@ -1,104 +1,69 @@
 import * as Cache from './enumerateCachedFiles.ts';
 import downloadFile, { DownloadResut } from './downloadFile.ts';
 import extractUrls from './extractUrls.ts';
-import fs from 'node:fs';
-import fsPromises from 'node:fs/promises';
 import parseArgs from './parseArgs.ts';
-import path from 'node:path';
+import * as path from 'path';
 import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue.ts';
-import { exists } from 'https://deno.land/std@0.224.0/fs/mod.ts';
+import { exists, existsSync } from 'fs';
 import { DownloadSchedule } from './downloadSchedule.ts';
 import { replaceBulk } from './replaceMultiple.ts';
-import * as log from 'log';
+import { getLogger as log, Logger } from 'log/get-logger';
+import logSetup from './logSetup.ts';
 
-Deno.mkdirSync('./logs');
+logSetup();
+const { args, rawArgs } = parseArgs();
+log().debug('Launched with arguments', { args, rawArgs });
 
-log.setup({
-	handlers: {
-		console: new log.ConsoleHandler('INFO', {
-			// formatter: log.formatters.jsonFormatter,
-			formatter: (record) =>
-				`[${record.datetime.toTimeString()}] ${record.levelName}: ${
-					record.msg
-				}${
-					record.args.length
-						? `\n${JSON.stringify(record.args, null, 2)}`
-						: ''
-				}\n`,
-			useColors: true,
-		}),
-		file: new log.FileHandler('DEBUG', {
-			filename: `./logs/${new Date()
-				.toISOString()
-				.replaceAll(':', '-')}.log`,
-			formatter: (record) =>
-				JSON.stringify(
-					{
-						time: record.datetime.toUTCString,
-						level: record.level,
-						levelName: record.levelName,
-						message: record.msg,
-						data: record.args,
-					},
-					null,
-					2
-				),
-			mode: 'x',
-		}),
-	},
-	loggers: {
-		default: {
-			level: 'DEBUG',
-			handlers: ['console', 'file'],
-		},
-	},
-});
+if (!args.resume && Array.from(Deno.readDirSync(args.tmpPath)).length > 0) {
+	log().critical(
+		'The <temp-folder> is not empty. Either provide an empty <temp-folder> or use --resume. Do not use --resume if the save file was changed since the last launch. Re-downloading everything is safer.'
+	);
+	Deno.exit();
+}
 
-const args = parseArgs();
-
-const logger = log.getLogger('default');
-
-const saveFileContent = fs.readFileSync(args.saveFilePath, 'utf-8');
+const saveFileContent = Deno.readTextFileSync(args.saveFilePath);
 const urls = extractUrls(saveFileContent);
-logger.info(`URLs detected.`, { numUrls: urls.length });
-logger.debug(`URLs`, { urls: urls });
+log().info(`URLs detected.`, { numUrls: urls.length });
+log().debug(`URLs`, { urls: urls });
 
 const cachedFiles = Cache.enumerateCachedFiles(args.cacheFolder);
 
 const downloadTasks: UrlDownloadTask[] = urls.map(function (
 	url,
-	urlIndex
+	urlId
 ): UrlDownloadTask {
-	logger.debug('URL queued for processing.', { url, urlIndex });
+	log().debug('URL queued for processing.', { url, urlId });
 
 	return {
 		url: url,
-		urlIndex: urlIndex,
+		urlId,
 		attempts: 0,
 		schedule: new DownloadSchedule(),
 		func: async function (): Promise<DownloadResut> {
-			const filePath = path.join(args.tmpPath, String(urlIndex));
+			const filePath = path.join(args.tmpPath, String(urlId));
 
 			if (await exists(filePath)) {
-				//
+				return {
+					ok: true,
+					status: 'existed',
+					statusText: 'Target file already exists.',
+					retryAfterTime: 0,
+				};
 			}
 
 			const cachedInstance = Cache.getCachedInstance(cachedFiles, url);
 
 			if (cachedInstance != null) {
-				logger.debug('Found cached file.', {
+				log().debug('Found cached file.', {
 					url,
-					urlIndex,
+					urlId,
 					cacheFile: cachedInstance.fullPath,
 				});
 
-				if (args.noLinks) {
-					await fsPromises.copyFile(
-						cachedInstance.fullPath,
-						filePath
-					);
+				if (args.links) {
+					await Deno.symlink(cachedInstance.fullPath, filePath);
 				} else {
-					await fsPromises.symlink(cachedInstance.fullPath, filePath);
+					await Deno.copyFile(cachedInstance.fullPath, filePath);
 				}
 
 				return {
@@ -109,21 +74,21 @@ const downloadTasks: UrlDownloadTask[] = urls.map(function (
 				};
 			}
 
-			return await downloadFile(filePath, url, urlIndex, args);
+			return await downloadFile(filePath, url, urlId, args);
 		},
 	};
 });
 
-logger.info('Initating the download queue...');
+log().info('Initating the download queue...');
 
 await runDownloadTasks(downloadTasks, args);
 
-logger.info('End of the download queue.');
-logger.info('Editing save file...');
+log().info('End of the download queue.');
+log().info('Editing save file...');
 
-const replacements: [string, string][] = urls.flatMap((url, urlIndex) => {
-	const filePath = path.join(args.tmpPath, String(urlIndex));
-	if (!fs.existsSync(filePath)) {
+const replacements: [string, string][] = urls.flatMap((url, urlId) => {
+	const filePath = path.join(args.tmpPath, String(urlId));
+	if (!existsSync(filePath)) {
 		return [];
 	}
 	return [[`"${url}"`, `"file:///${filePath}"`.replaceAll('\\', '/')]];
@@ -132,14 +97,14 @@ const replacementDict = Object.fromEntries(replacements);
 
 const saveFileContentNew = replaceBulk(saveFileContent, replacementDict);
 
-logger.info('Finished editing save file.');
-logger.info('Writing new save file...');
+log().info('Finished editing save file.');
+log().info('Writing new save file...');
 
 const savePath = path.join(
 	path.dirname(args.saveFilePath),
 	`${path.basename(args.saveFilePath, '.json')}.reupload.json`
 );
 
-fs.writeFileSync(savePath, saveFileContentNew);
+Deno.writeTextFileSync(savePath, saveFileContentNew);
 
-logger.info('Finished writing new save file.');
+log().info('Finished writing new save file.');

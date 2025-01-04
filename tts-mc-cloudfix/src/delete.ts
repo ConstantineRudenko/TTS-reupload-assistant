@@ -1,6 +1,6 @@
 import { getOrphanFiles } from './shared.ts';
 
-import * as path from 'jsr:@std/path';
+import * as path from 'path';
 
 export async function deleteOrphanFiles(pathCloud: string) {
 	const orphanFiles = getOrphanFiles(pathCloud);

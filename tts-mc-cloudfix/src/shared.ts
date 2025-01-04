@@ -1,7 +1,6 @@
-import { BSON } from "npm:bson";
 import { loadBsonSync, saveBsonSync } from './bson.ts';
 
-import * as path from 'jsr:@std/path';
+import * as path from 'path';
 
 const cloudFileNames = {
 	CloudInfo: 'CloudInfo.bson',
