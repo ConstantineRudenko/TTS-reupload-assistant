@@ -11,6 +11,7 @@ interface ArgsRaw {
 
 	'--links': boolean;
 	'--resume': boolean;
+	'--verbose': boolean;
 }
 
 export interface Args {
@@ -24,6 +25,7 @@ export interface Args {
 
 	resume: boolean;
 	links: boolean;
+	verbose: boolean;
 }
 
 function getArgsRaw(): ArgsRaw {
@@ -61,6 +63,8 @@ Options:
     --timeout=T  [default: 10000]
         How long to wait in milliseconds for the server response
         before giving up on a URL.
+    -v, --verbose
+        Write more information in the log file.
 
 Output:
     Will be placed next to the original file with ".reupload"
@@ -88,6 +92,7 @@ export default function parseArgs(): { args: Args; rawArgs: ArgsRaw } {
 			timeout: parseTimeout(raw['--timeout'] ?? 0),
 			maxAttempts: parseRetries(raw['--max-attempts'] ?? 5),
 			simultaneous: parseSimultaneous(raw['--simultaneous'] ?? '5'),
+			verbose: raw['--verbose'],
 		},
 	};
 }

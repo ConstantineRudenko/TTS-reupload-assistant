@@ -1,4 +1,5 @@
 import { existsSync } from 'fs';
+import { Args } from './parseArgs.ts';
 import * as log from 'log';
 
 function logFileFormatter(record: log.LogRecord) {
@@ -16,7 +17,7 @@ function logFileFormatter(record: log.LogRecord) {
 	return `${json}\n`;
 }
 
-export default function logSetup() {
+export default function logSetup(args: Args) {
 	const logDir = './logs';
 
 	if (!existsSync(logDir)) {
@@ -37,7 +38,7 @@ export default function logSetup() {
 					}`,
 				useColors: true,
 			}),
-			file: new log.FileHandler('DEBUG', {
+			file: new log.FileHandler(args.verbose ? 'DEBUG' : 'INFO', {
 				filename: `./logs/${new Date()
 					.toISOString()
 					.replaceAll(':', '-')}.log`,

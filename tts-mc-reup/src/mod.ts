@@ -7,11 +7,11 @@ import { runDownloadTasks, UrlDownloadTask } from './runDownloadQueue.ts';
 import { exists, existsSync } from 'fs';
 import { DownloadSchedule } from './downloadSchedule.ts';
 import { replaceBulk } from './replaceMultiple.ts';
-import { getLogger as log, Logger } from 'log/get-logger';
+import { getLogger as log } from 'log/get-logger';
 import logSetup from './logSetup.ts';
 
-logSetup();
 const { args, rawArgs } = parseArgs();
+logSetup(args);
 log().debug('Launched with arguments', { args, rawArgs });
 
 if (!args.resume && Array.from(Deno.readDirSync(args.tmpPath)).length > 0) {
